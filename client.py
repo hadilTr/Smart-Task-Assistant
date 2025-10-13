@@ -132,6 +132,45 @@ class TaskChatbot:
             "required": ["date"]
         }
     }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "delete_task",
+        "description": "Delete a task by its ID.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "task_id": {
+                    "type": "string",
+                    "description": "The ID of the task to delete"
+                }
+            },
+            "required": ["task_id"]
+        }
+    }
+},
+
+{
+    "type": "function",
+    "function": {
+        "name": "tasks_by_range",
+        "description": "List tasks within a date range. Use this when the user asks for tasks 'this week', 'next 7 days', 'between dates', or any time range.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "start": {
+                    "type": "string",
+                    "description": "Start date in YYYY-MM-DD format or natural language like 'today', 'tomorrow', 'next Monday'"
+                },
+                "end": {
+                    "type": "string",
+                    "description": "End date in YYYY-MM-DD format or natural language. Optional - if not provided, assumes single day (same as start)"
+                }
+            },
+            "required": ["start"]
+        }
+    }
 }
 
         ]
