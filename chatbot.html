@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Task Assistant</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #06beb6 0%, #48b1bf 100%);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+            height: 700px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #06beb6 0%, #48b1bf 100%);
+            color: white;
+            padding: 25px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .chat-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: #f8f9fa;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message.bot {
+            display: flex;
+            align-items: flex-start;
+        }
+
+        .message.user {
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .avatar {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            margin-right: 10px;
+            flex-shrink: 0;
+        }
+
+        .bot .avatar {
+            background: linear-gradient(135deg, #06beb6 0%, #48b1bf 100%);
+        }
+
+        .message-content {
+            max-width: 75%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            line-height: 1.5;
+            font-size: 14px;
+        }
+
+        .bot .message-content {
+            background: white;
+            color: #333;
+            border-bottom-left-radius: 4px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .user .message-content {
+            background: linear-gradient(135deg, #06beb6 0%, #48b1bf 100%);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .task-item {
+            background: #f0f0f0;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .task-item.completed {
+            opacity: 0.6;
+            text-decoration: line-through;
+        }
+
+        .task-checkbox {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .task-text {
+            flex: 1;
+        }
+
+        .task-delete {
+            background: #ff4757;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .task-delete:hover {
+            background: #ff3838;
+        }
+
+        .input-area {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            gap: 10px;
+        }
+
+        .input-area input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 25px;
+            font-size: 14px;
+            outline: none;
+            transition: border 0.3s;
+        }
+
+        .input-area input:focus {
+            border-color: #06beb6;
+        }
+
+        .input-area button {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #06beb6 0%, #48b1bf 100%);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: transform 0.2s;
+        }
+
+        .input-area button:hover {
+            transform: scale(1.05);
+        }
+
+        .input-area button:active {
+            transform: scale(0.95);
+        }
+
+        .suggestions {
+            display: flex;
+            gap: 8px;
+            padding: 10px 20px;
+            background: white;
+            border-top: 1px solid #e0e0e0;
+            overflow-x: auto;
+        }
+
+        .suggestion-chip {
+            padding: 8px 16px;
+            background: #f0f0f0;
+            border-radius: 20px;
+            font-size: 12px;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: background 0.3s;
+        }
+
+        .suggestion-chip:hover {
+            background: #e0e0e0;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 Smart Task Assistant</h1>
+            <p>Your personal task management helper</p>
+        </div>
+
+        <div class="chat-area" id="chatArea">
+            <div class="message bot">
+                <div class="avatar">🤖</div>
+                <div class="message-content">
+                    Hello! I'm your Smart Task Assistant. I can help you manage your tasks. Try commands like "add task", "show tasks", or "help"!
+                </div>
+            </div>
+        </div>
+
+        <div class="suggestions">
+            <div class="suggestion-chip" onclick="sendSuggestion('add task')">➕ Add Task</div>
+            <div class="suggestion-chip" onclick="sendSuggestion('show tasks')">📋 Show Tasks</div>
+            <div class="suggestion-chip" onclick="sendSuggestion('help')">❓ Help</div>
+        </div>
+
+        <div class="input-area">
+            <input type="text" id="userInput" placeholder="Type your message..." onkeypress="handleKeyPress(event)">
+            <button onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+    <script>
+        const tasks = [];
+        let waitingForTask = false;
+
+        function addMessage(text, isBot = true, isHtml = false) {
+            const chatArea = document.getElementById('chatArea');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isBot ? 'bot' : 'user'}`;
+            
+            if (isBot) {
+                const avatar = document.createElement('div');
+                avatar.className = 'avatar';
+                avatar.textContent = '🤖';
+                messageDiv.appendChild(avatar);
+            }
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            
+            if (isHtml) {
+                contentDiv.innerHTML = text;
+            } else {
+                contentDiv.textContent = text;
+            }
+            
+            messageDiv.appendChild(contentDiv);
+            chatArea.appendChild(messageDiv);
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('userInput');
+            const message = input.value.trim();
+            
+            if (message === '') return;
+            
+            addMessage(message, false);
+            input.value = '';
+            
+            setTimeout(() => processCommand(message), 500);
+        }
+
+        function sendSuggestion(text) {
+            document.getElementById('userInput').value = text;
+            sendMessage();
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        function processCommand(command) {
+            const lowerCommand = command.toLowerCase();
+            
+            if (waitingForTask) {
+                addTask(command);
+                waitingForTask = false;
+                return;
+            }
+            
+            if (lowerCommand.includes('add task') || lowerCommand.includes('create task') || lowerCommand.includes('new task')) {
+                addMessage("Sure! What task would you like to add?");
+                waitingForTask = true;
+            } else if (lowerCommand.includes('show task') || lowerCommand.includes('list task') || lowerCommand.includes('my task')) {
+                showTasks();
+            } else if (lowerCommand.includes('clear') || lowerCommand.includes('delete all')) {
+                clearTasks();
+            } else if (lowerCommand.includes('help')) {
+                showHelp();
+            } else if (lowerCommand.includes('hello') || lowerCommand.includes('hi')) {
+                addMessage("Hello! How can I assist you with your tasks today? 😊");
+            } else if (tasks.length === 0 && !lowerCommand.includes('help')) {
+                addMessage("I'm not sure what you mean. You can try: 'add task', 'show tasks', or 'help' for more commands.");
+            } else {
+                addTask(command);
+            }
+        }
+
+        function addTask(taskText) {
+            const task = {
+                id: Date.now(),
+                text: taskText,
+                completed: false
+            };
+            
+            tasks.push(task);
+            addMessage(`✅ Task added: "${taskText}". You now have ${tasks.length} task(s).`);
+        }
+
+        function showTasks() {
+            if (tasks.length === 0) {
+                addMessage("You don't have any tasks yet. Add one by typing 'add task'!");
+                return;
+            }
+            
+            let html = `<div style="margin-top: 10px;"><strong>Your Tasks (${tasks.length}):</strong></div>`;
+            
+            tasks.forEach((task, index) => {
+                html += `
+                    <div class="task-item ${task.completed ? 'completed' : ''}" id="task-${task.id}">
+                        <input type="checkbox" class="task-checkbox" ${task.completed ? 'checked' : ''} onchange="toggleTask(${task.id})">
+                        <span class="task-text">${index + 1}. ${task.text}</span>
+                        <button class="task-delete" onclick="deleteTask(${task.id})">Delete</button>
+                    </div>
+                `;
+            });
+            
+            addMessage(html, true, true);
+        }
+
+        function toggleTask(taskId) {
+            const task = tasks.find(t => t.id === taskId);
+            if (task) {
+                task.completed = !task.completed;
+                const taskElement = document.getElementById(`task-${taskId}`);
+                if (task.completed) {
+                    taskElement.classList.add('completed');
+                    addMessage(`Great job! Task "${task.text}" completed! 🎉`);
+                } else {
+                    taskElement.classList.remove('completed');
+                }
+            }
+        }
+
+        function deleteTask(taskId) {
+            const taskIndex = tasks.findIndex(t => t.id === taskId);
+            if (taskIndex !== -1) {
+                const deletedTask = tasks.splice(taskIndex, 1)[0];
+                document.getElementById(`task-${taskId}`).remove();
+                addMessage(`Task "${deletedTask.text}" has been deleted.`);
+            }
+        }
+
+        function clearTasks() {
+            if (tasks.length === 0) {
+                addMessage("There are no tasks to clear.");
+                return;
+            }
+            
+            tasks.length = 0;
+            addMessage("All tasks have been cleared! ✨");
+        }
+
+        function showHelp() {
+            const helpText = `
+                <div style="line-height: 1.8;">
+                    <strong>Available Commands:</strong><br>
+                    • "add task" - Add a new task<br>
+                    • "show tasks" - Display all tasks<br>
+                    • "clear" - Delete all tasks<br>
+                    • "help" - Show this help message<br><br>
+                    You can also just type a task directly and I'll add it for you!
+                </div>
+            `;
+            addMessage(helpText, true, true);
+        }
+    </script>
+</body>
+</html>
