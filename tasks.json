@@ -1,12 +1,5 @@
 [
   {
-    "id": 2,
-    "title": "writing a report",
-    "due_date": "the day after tomorrow",
-    "done": false,
-    "created_at": "2025-10-13T13:25:52.623093"
-  },
-  {
     "id": 3,
     "title": "meeting",
     "due_date": "2025-10-14",

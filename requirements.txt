@@ -3,3 +3,4 @@ fastmcp
 groq
 dateparser
 langchain-mcp-adapters
+langchain-groq

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Task Assistant</title>
+    <title>TaskFlow AI Assistant</title>
     <style>
         * {
             margin: 0;
@@ -12,8 +12,8 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #06beb6 0%, #48b1bf 100%);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #578576 0%, #a8b3af 50%, #96c7b7 100%);
             height: 100vh;
             display: flex;
             justify-content: center;
@@ -23,10 +23,11 @@
 
         .container {
             width: 100%;
-            max-width: 500px;
-            height: 700px;
-            background: white;
-            border-radius: 20px;
+            max-width: 900px;
+            height: 95vh;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
             display: flex;
             flex-direction: column;
@@ -34,280 +35,516 @@
         }
 
         .header {
-            background: linear-gradient(135deg, #06beb6 0%, #48b1bf 100%);
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            padding: 18px 28px;
             color: white;
-            padding: 25px;
-            text-align: center;
+            display: flex;
+            align-items: center;
+            gap: 16px;
         }
 
-        .header h1 {
+        .header-icon {
+            width: 48px;
+            height: 48px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             font-size: 24px;
-            margin-bottom: 5px;
         }
 
-        .header p {
+        .header-content h1 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .header-content p {
             font-size: 14px;
             opacity: 0.9;
         }
 
-        .chat-area {
+        .status-indicator {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: #4ade80;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .chat-container {
             flex: 1;
             overflow-y: auto;
-            padding: 20px;
-            background: #f8f9fa;
+            padding: 24px;
+            background: #f8fafc;
         }
 
         .message {
-            margin-bottom: 15px;
-            animation: fadeIn 0.3s ease;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .message.bot {
             display: flex;
-            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 20px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .message.user {
-            display: flex;
-            justify-content: flex-end;
+            flex-direction: row-reverse;
         }
 
         .avatar {
-            width: 35px;
-            height: 35px;
-            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 18px;
-            margin-right: 10px;
+            font-size: 20px;
             flex-shrink: 0;
         }
 
-        .bot .avatar {
-            background: linear-gradient(135deg, #06beb6 0%, #48b1bf 100%);
+        .avatar.bot {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+
+        .avatar.user {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
         }
 
         .message-content {
-            max-width: 75%;
-            padding: 12px 16px;
-            border-radius: 18px;
-            line-height: 1.5;
-            font-size: 14px;
+            max-width: 70%;
+            padding: 14px 18px;
+            border-radius: 16px;
+            line-height: 1.6;
+            font-size: 15px;
         }
 
-        .bot .message-content {
+        .message.bot .message-content {
             background: white;
-            color: #333;
-            border-bottom-left-radius: 4px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            color: #1e293b;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
         }
 
-        .user .message-content {
-            background: linear-gradient(135deg, #06beb6 0%, #48b1bf 100%);
+        .message.user .message-content {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
             color: white;
-            border-bottom-right-radius: 4px;
         }
 
-        .task-item {
-            background: #f0f0f0;
-            padding: 10px;
-            margin: 5px 0;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .task-item.completed {
+        .timestamp {
+            font-size: 11px;
             opacity: 0.6;
-            text-decoration: line-through;
+            margin-top: 6px;
         }
 
-        .task-checkbox {
-            width: 18px;
-            height: 18px;
-            cursor: pointer;
+        .typing-indicator {
+            display: none;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
         }
 
-        .task-text {
-            flex: 1;
-        }
-
-        .task-delete {
-            background: #ff4757;
-            color: white;
-            border: none;
-            padding: 4px 8px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 12px;
-        }
-
-        .task-delete:hover {
-            background: #ff3838;
-        }
-
-        .input-area {
-            padding: 20px;
-            background: white;
-            border-top: 1px solid #e0e0e0;
+        .typing-indicator.active {
             display: flex;
-            gap: 10px;
         }
 
-        .input-area input {
-            flex: 1;
-            padding: 12px 16px;
-            border: 2px solid #e0e0e0;
-            border-radius: 25px;
-            font-size: 14px;
-            outline: none;
-            transition: border 0.3s;
+        .typing-dots {
+            display: flex;
+            gap: 4px;
+            padding: 14px 18px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
         }
 
-        .input-area input:focus {
-            border-color: #06beb6;
+        .typing-dots span {
+            width: 8px;
+            height: 8px;
+            background: #94a3b8;
+            border-radius: 50%;
+            animation: typing 1.4s infinite;
         }
 
-        .input-area button {
-            padding: 12px 24px;
-            background: linear-gradient(135deg, #06beb6 0%, #48b1bf 100%);
-            color: white;
-            border: none;
-            border-radius: 25px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 600;
-            transition: transform 0.2s;
+        .typing-dots span:nth-child(2) {
+            animation-delay: 0.2s;
         }
 
-        .input-area button:hover {
-            transform: scale(1.05);
+        .typing-dots span:nth-child(3) {
+            animation-delay: 0.4s;
         }
 
-        .input-area button:active {
-            transform: scale(0.95);
+        @keyframes typing {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-10px); }
         }
 
-        .suggestions {
+        .quick-actions {
+            padding: 16px 24px;
+            background: white;
+            border-top: 1px solid #e2e8f0;
             display: flex;
             gap: 8px;
-            padding: 10px 20px;
-            background: white;
-            border-top: 1px solid #e0e0e0;
             overflow-x: auto;
         }
 
-        .suggestion-chip {
+        .quick-action-btn {
             padding: 8px 16px;
-            background: #f0f0f0;
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
             border-radius: 20px;
-            font-size: 12px;
+            font-size: 13px;
+            color: #475569;
             cursor: pointer;
             white-space: nowrap;
-            transition: background 0.3s;
+            transition: all 0.2s;
         }
 
-        .suggestion-chip:hover {
-            background: #e0e0e0;
+        .quick-action-btn:hover {
+            background: #e2e8f0;
+            transform: translateY(-1px);
         }
 
-        ::-webkit-scrollbar {
-            width: 6px;
+        .input-container {
+            padding: 20px 20px;
+            background: white;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            gap: 12px;
+            align-items: center;
         }
 
-        ::-webkit-scrollbar-track {
-            background: #f1f1f1;
+        .input-wrapper {
+            flex: 1;
+            position: relative;
+            display: flex;
+            align-items: center;
+            background: #f8fafc;
+            border-radius: 24px;
+            padding: 12px 20px;
+            border: 2px solid transparent;
+            transition: all 0.3s;
         }
 
-        ::-webkit-scrollbar-thumb {
-            background: #888;
-            border-radius: 3px;
+        .input-wrapper:focus-within {
+            background: white;
+            border-color: #10b981;
+            box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
         }
 
-        ::-webkit-scrollbar-thumb:hover {
-            background: #555;
+        #userInput {
+            flex: 1;
+            border: none;
+            background: transparent;
+            font-size: 15px;
+            color: #1e293b;
+            outline: none;
+        }
+
+        #userInput::placeholder {
+            color: #94a3b8;
+        }
+
+        .attach-btn {
+            background: none;
+            border: none;
+            color: #94a3b8;
+            cursor: pointer;
+            font-size: 20px;
+            padding: 4px;
+            transition: all 0.2s;
+        }
+
+        .attach-btn:hover {
+            color: #10b981;
+            transform: scale(1.1);
+        }
+
+        .send-btn {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .send-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+        }
+
+        .send-btn:active {
+            transform: scale(0.95);
+        }
+
+        .send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .welcome-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .welcome-icon {
+            font-size: 64px;
+            margin-bottom: 24px;
+        }
+
+        .welcome-screen h2 {
+            font-size: 28px;
+            color: #1e293b;
+            margin-bottom: 12px;
+        }
+
+        .welcome-screen p {
+            font-size: 16px;
+            color: #64748b;
+            margin-bottom: 32px;
+        }
+
+        .suggestion-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            width: 100%;
+            max-width: 600px;
+        }
+
+        .suggestion-card {
+            padding: 16px;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: left;
+        }
+
+        .suggestion-card:hover {
+            border-color: #10b981;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+        }
+
+        .suggestion-card .icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        .suggestion-card .title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 4px;
+        }
+
+        .suggestion-card .description {
+            font-size: 12px;
+            color: #64748b;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>🤖 Smart Task Assistant</h1>
-            <p>Your personal task management helper</p>
+            <div class="header-icon">✓</div>
+            <div class="header-content">
+                <h1>TaskFlow AI</h1>
+                <p>Your intelligent task management assistant</p>
+            </div>
+            <div class="status-indicator">
+                <div class="status-dot"></div>
+                <span>Online</span>
+            </div>
         </div>
 
-        <div class="chat-area" id="chatArea">
-            <div class="message bot">
-                <div class="avatar">🤖</div>
-                <div class="message-content">
-                    Hello! I'm your Smart Task Assistant. I can help you manage your tasks. Try commands like "add task", "show tasks", or "help"!
+        <div class="chat-container" id="chatContainer">
+            <div class="welcome-screen" id="welcomeScreen">
+                <div class="welcome-icon">🚀</div>
+                <h2>Welcome to TaskFlow AI</h2>
+                <p>I'm here to help you manage your tasks efficiently. Try one of these to get started:</p>
+                <div class="suggestion-cards">
+                    <div class="suggestion-card" onclick="sendSuggestion('Add a task to finish the project report by Friday')">
+                        <div class="icon">📝</div>
+                        <div class="title">Add Task</div>
+                        <div class="description">Create a new task</div>
+                    </div>
+                    <div class="suggestion-card" onclick="sendSuggestion('Show me all my tasks')">
+                        <div class="icon">📋</div>
+                        <div class="title">View Tasks</div>
+                        <div class="description">See all your tasks</div>
+                    </div>
+                    <div class="suggestion-card" onclick="sendSuggestion('Summarize my tasks')">
+                        <div class="icon">📊</div>
+                        <div class="title">Get Summary</div>
+                        <div class="description">Overview of your tasks</div>
+                    </div>
+                    <div class="suggestion-card" onclick="sendSuggestion('Send me a notification reminder')">
+                        <div class="icon">🔔</div>
+                        <div class="title">Set Reminder</div>
+                        <div class="description">Get notified about tasks</div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div class="suggestions">
-            <div class="suggestion-chip" onclick="sendSuggestion('add task')">➕ Add Task</div>
-            <div class="suggestion-chip" onclick="sendSuggestion('show tasks')">📋 Show Tasks</div>
-            <div class="suggestion-chip" onclick="sendSuggestion('help')">❓ Help</div>
+        <div class="quick-actions" id="quickActions" style="display: none;">
+            <button class="quick-action-btn" onclick="sendSuggestion('List my tasks')">📋 List Tasks</button>
+            <button class="quick-action-btn" onclick="sendSuggestion('Add a new task')">➕ Add Task</button>
+            <button class="quick-action-btn" onclick="sendSuggestion('Summarize my progress')">📊 Summary</button>
+            <button class="quick-action-btn" onclick="sendSuggestion('What can you do?')">❓ Help</button>
         </div>
 
-        <div class="input-area">
-            <input type="text" id="userInput" placeholder="Type your message..." onkeypress="handleKeyPress(event)">
-            <button onclick="sendMessage()">Send</button>
+        <div class="typing-indicator" id="typingIndicator">
+            <div class="avatar bot">🤖</div>
+            <div class="typing-dots">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+
+        <div class="input-container">
+            <div class="input-wrapper">
+                <input 
+                    type="text" 
+                    id="userInput" 
+                    placeholder="Type your message... (e.g., 'Add task to buy groceries')"
+                    onkeypress="handleKeyPress(event)"
+                >
+                <button class="attach-btn" title="Coming soon">📎</button>
+            </div>
+            <button class="send-btn" id="sendBtn" onclick="sendMessage()">
+                ➤
+            </button>
         </div>
     </div>
 
     <script>
-        const tasks = [];
-        let waitingForTask = false;
+        let messageCount = 0;
 
-        function addMessage(text, isBot = true, isHtml = false) {
-            const chatArea = document.getElementById('chatArea');
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `message ${isBot ? 'bot' : 'user'}`;
+        function getCurrentTime() {
+            const now = new Date();
+            return now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function addMessage(text, isUser) {
+            const chatContainer = document.getElementById('chatContainer');
+            const welcomeScreen = document.getElementById('welcomeScreen');
+            const quickActions = document.getElementById('quickActions');
             
-            if (isBot) {
-                const avatar = document.createElement('div');
-                avatar.className = 'avatar';
-                avatar.textContent = '🤖';
-                messageDiv.appendChild(avatar);
+            // Hide welcome screen and show quick actions after first message
+            if (messageCount === 0) {
+                welcomeScreen.style.display = 'none';
+                quickActions.style.display = 'flex';
             }
+            
+            messageCount++;
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user' : 'bot'}`;
+            
+            const avatar = document.createElement('div');
+            avatar.className = `avatar ${isUser ? 'user' : 'bot'}`;
+            avatar.textContent = isUser ? '👤' : '🤖';
             
             const contentDiv = document.createElement('div');
             contentDiv.className = 'message-content';
+            contentDiv.textContent = text;
             
-            if (isHtml) {
-                contentDiv.innerHTML = text;
-            } else {
-                contentDiv.textContent = text;
-            }
+            const timestamp = document.createElement('div');
+            timestamp.className = 'timestamp';
+            timestamp.textContent = getCurrentTime();
+            contentDiv.appendChild(timestamp);
             
+            messageDiv.appendChild(avatar);
             messageDiv.appendChild(contentDiv);
-            chatArea.appendChild(messageDiv);
-            chatArea.scrollTop = chatArea.scrollHeight;
+            
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
         }
 
-        function sendMessage() {
+        function showTypingIndicator() {
+            const indicator = document.getElementById('typingIndicator');
+            indicator.classList.add('active');
+            const chatContainer = document.getElementById('chatContainer');
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function hideTypingIndicator() {
+            const indicator = document.getElementById('typingIndicator');
+            indicator.classList.remove('active');
+        }
+
+        async function sendMessage() {
             const input = document.getElementById('userInput');
             const message = input.value.trim();
             
-            if (message === '') return;
+            if (!message) return;
             
-            addMessage(message, false);
+            // Add user message
+            addMessage(message, true);
             input.value = '';
             
-            setTimeout(() => processCommand(message), 500);
+            // Show typing indicator
+            showTypingIndicator();
+            
+            // Simulate API call (replace with actual backend call)
+            setTimeout(() => {
+                hideTypingIndicator();
+                
+                // Simulate bot response
+                const responses = [
+                    "✅ I've added that task to your list! Is there anything else you'd like me to do?",
+                    "📋 Here are your current tasks:\n1. Finish project report (Due Friday)\n2. Buy groceries\n3. Call dentist",
+                    "Great! I've marked that task as complete. Keep up the good work! 🎉",
+                    "📊 Task Summary: You have 3 active tasks, 5 completed this week. You're making great progress!",
+                    "🔔 Reminder set! I'll notify you about that task."
+                ];
+                
+                const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+                addMessage(randomResponse, false);
+            }, 1500);
         }
 
         function sendSuggestion(text) {
-            document.getElementById('userInput').value = text;
+            const input = document.getElementById('userInput');
+            input.value = text;
             sendMessage();
         }
 
@@ -317,111 +554,8 @@
             }
         }
 
-        function processCommand(command) {
-            const lowerCommand = command.toLowerCase();
-            
-            if (waitingForTask) {
-                addTask(command);
-                waitingForTask = false;
-                return;
-            }
-            
-            if (lowerCommand.includes('add task') || lowerCommand.includes('create task') || lowerCommand.includes('new task')) {
-                addMessage("Sure! What task would you like to add?");
-                waitingForTask = true;
-            } else if (lowerCommand.includes('show task') || lowerCommand.includes('list task') || lowerCommand.includes('my task')) {
-                showTasks();
-            } else if (lowerCommand.includes('clear') || lowerCommand.includes('delete all')) {
-                clearTasks();
-            } else if (lowerCommand.includes('help')) {
-                showHelp();
-            } else if (lowerCommand.includes('hello') || lowerCommand.includes('hi')) {
-                addMessage("Hello! How can I assist you with your tasks today? 😊");
-            } else if (tasks.length === 0 && !lowerCommand.includes('help')) {
-                addMessage("I'm not sure what you mean. You can try: 'add task', 'show tasks', or 'help' for more commands.");
-            } else {
-                addTask(command);
-            }
-        }
-
-        function addTask(taskText) {
-            const task = {
-                id: Date.now(),
-                text: taskText,
-                completed: false
-            };
-            
-            tasks.push(task);
-            addMessage(`✅ Task added: "${taskText}". You now have ${tasks.length} task(s).`);
-        }
-
-        function showTasks() {
-            if (tasks.length === 0) {
-                addMessage("You don't have any tasks yet. Add one by typing 'add task'!");
-                return;
-            }
-            
-            let html = `<div style="margin-top: 10px;"><strong>Your Tasks (${tasks.length}):</strong></div>`;
-            
-            tasks.forEach((task, index) => {
-                html += `
-                    <div class="task-item ${task.completed ? 'completed' : ''}" id="task-${task.id}">
-                        <input type="checkbox" class="task-checkbox" ${task.completed ? 'checked' : ''} onchange="toggleTask(${task.id})">
-                        <span class="task-text">${index + 1}. ${task.text}</span>
-                        <button class="task-delete" onclick="deleteTask(${task.id})">Delete</button>
-                    </div>
-                `;
-            });
-            
-            addMessage(html, true, true);
-        }
-
-        function toggleTask(taskId) {
-            const task = tasks.find(t => t.id === taskId);
-            if (task) {
-                task.completed = !task.completed;
-                const taskElement = document.getElementById(`task-${taskId}`);
-                if (task.completed) {
-                    taskElement.classList.add('completed');
-                    addMessage(`Great job! Task "${task.text}" completed! 🎉`);
-                } else {
-                    taskElement.classList.remove('completed');
-                }
-            }
-        }
-
-        function deleteTask(taskId) {
-            const taskIndex = tasks.findIndex(t => t.id === taskId);
-            if (taskIndex !== -1) {
-                const deletedTask = tasks.splice(taskIndex, 1)[0];
-                document.getElementById(`task-${taskId}`).remove();
-                addMessage(`Task "${deletedTask.text}" has been deleted.`);
-            }
-        }
-
-        function clearTasks() {
-            if (tasks.length === 0) {
-                addMessage("There are no tasks to clear.");
-                return;
-            }
-            
-            tasks.length = 0;
-            addMessage("All tasks have been cleared! ✨");
-        }
-
-        function showHelp() {
-            const helpText = `
-                <div style="line-height: 1.8;">
-                    <strong>Available Commands:</strong><br>
-                    • "add task" - Add a new task<br>
-                    • "show tasks" - Display all tasks<br>
-                    • "clear" - Delete all tasks<br>
-                    • "help" - Show this help message<br><br>
-                    You can also just type a task directly and I'll add it for you!
-                </div>
-            `;
-            addMessage(helpText, true, true);
-        }
+        // Focus input on load
+        document.getElementById('userInput').focus();
     </script>
 </body>
 </html>
