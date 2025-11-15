@@ -5,3 +5,4 @@ dateparser
 langchain-mcp-adapters
 langchain-groq
 pymongo
+re

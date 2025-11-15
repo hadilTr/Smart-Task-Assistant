@@ -6,7 +6,8 @@ from mcp.server.fastmcp import FastMCP
 from dateparser import parse as date_parse
 from dateparser.search import search_dates
 from pymongo.server_api import ServerApi
-
+import re
+from datetime import datetime, timedelta  
 
 load_dotenv()
 
@@ -45,12 +46,9 @@ def get_next_task_id():
         # Fallback: count documents and add 1
         return tasks_collection.count_documents({}) + 1
 
-
+"""
 def parse_due_date(date_string: str):
-    """
-    Enhanced date parsing with better natural language support.
-    Returns date in YYYY-MM-DD format or None if parsing fails.
-    """
+
     if not date_string:
         return None
     
@@ -73,6 +71,138 @@ def parse_due_date(date_string: str):
         return dates[0][1].strftime("%Y-%m-%d")
     
     return None
+"""
+
+def parse_due_date(date_string: str):
+    """
+    Enhanced date parsing with intelligent week handling.
+    
+    Week interpretations:
+    - "next week" → Monday of next week
+    - "this week" → Monday of current week (or today if past Monday)
+    - "end of week" → Friday of current week
+    - "end of next week" → Friday of next week
+    - "beginning of next week" → Monday of next week
+    
+    Also supports all standard dateparser formats.
+    """
+    if not date_string:
+        return None
+    
+    # Normalize input
+    date_string_lower = date_string.lower().strip()
+    now = datetime.now()
+    current_weekday = now.weekday()  # Monday=0, Tuesday=1, ..., Sunday=6
+    
+    # === WEEK-BASED PATTERNS ===
+    
+    # Pattern: "next week" or "beginning of next week"
+    if re.search(r'\b(next week|beginning of next week|start of next week)\b', date_string_lower):
+        days_until_next_monday = (7 - current_weekday) if current_weekday != 0 else 7
+        target_date = now + timedelta(days=days_until_next_monday)
+        return target_date.strftime("%Y-%m-%d")
+    
+    # Pattern: "end of next week"
+    if re.search(r'\bend of next week\b', date_string_lower):
+        days_until_next_monday = (7 - current_weekday) if current_weekday != 0 else 7
+        next_monday = now + timedelta(days=days_until_next_monday)
+        next_friday = next_monday + timedelta(days=4)  # Monday + 4 = Friday
+        return next_friday.strftime("%Y-%m-%d")
+    
+    # Pattern: "this week" or "beginning of this week"
+    if re.search(r'\b(this week|beginning of this week|start of this week)\b', date_string_lower):
+        if current_weekday == 0:  # Already Monday
+            target_date = now
+        else:
+            # Go back to this week's Monday
+            target_date = now - timedelta(days=current_weekday)
+        return target_date.strftime("%Y-%m-%d")
+    
+    # Pattern: "end of week" or "end of this week"
+    if re.search(r'\bend of (this )?week\b', date_string_lower):
+        if current_weekday <= 4:  # Monday to Friday
+            days_until_friday = 4 - current_weekday
+            target_date = now + timedelta(days=days_until_friday)
+        else:  # Saturday or Sunday - go to next Friday
+            days_until_next_monday = 7 - current_weekday
+            next_monday = now + timedelta(days=days_until_next_monday)
+            target_date = next_monday + timedelta(days=4)
+        return target_date.strftime("%Y-%m-%d")
+    
+    # Pattern: "in X weeks" → X weeks from today
+    weeks_match = re.search(r'\bin (\d+) weeks?\b', date_string_lower)
+    if weeks_match:
+        num_weeks = int(weeks_match.group(1))
+        target_date = now + timedelta(weeks=num_weeks)
+        return target_date.strftime("%Y-%m-%d")
+    
+    # === DAY-BASED PATTERNS ===
+    
+    # Map weekday names to numbers
+    weekday_map = {
+        'monday': 0, 'mon': 0,
+        'tuesday': 1, 'tue': 1, 'tues': 1,
+        'wednesday': 2, 'wed': 2,
+        'thursday': 3, 'thu': 3, 'thur': 3, 'thurs': 3,
+        'friday': 4, 'fri': 4,
+        'saturday': 5, 'sat': 5,
+        'sunday': 6, 'sun': 6
+    }
+    
+    # Pattern: "next <weekday>" - go to the next occurrence of that weekday
+    for day_name, day_num in weekday_map.items():
+        if re.search(rf'\bnext {day_name}\b', date_string_lower):
+            days_ahead = (day_num - current_weekday) % 7
+            if days_ahead == 0:  # If today is that day, go to next week's instance
+                days_ahead = 7
+            target_date = now + timedelta(days=days_ahead)
+            return target_date.strftime("%Y-%m-%d")
+    
+    # Pattern: "this <weekday>" - go to this week's occurrence (or today if that day)
+    for day_name, day_num in weekday_map.items():
+        if re.search(rf'\bthis {day_name}\b', date_string_lower):
+            if current_weekday == day_num:
+                target_date = now
+            elif current_weekday < day_num:
+                days_ahead = day_num - current_weekday
+                target_date = now + timedelta(days=days_ahead)
+            else:  # Already passed that day this week
+                days_ahead = (7 - current_weekday) + day_num
+                target_date = now + timedelta(days=days_ahead)
+            return target_date.strftime("%Y-%m-%d")
+    
+    # === STANDARD DATEPARSER ===
+    
+    # Let dateparser handle everything else
+    parsed_date = date_parse(
+        date_string,
+        settings={
+            'PREFER_DATES_FROM': 'future',
+            'RELATIVE_BASE': now,
+            'TIMEZONE': 'UTC',
+        }
+    )
+    
+    if parsed_date:
+        return parsed_date.strftime("%Y-%m-%d")
+    
+    # Fallback: Try search_dates for embedded dates
+    dates = search_dates(date_string, settings={'PREFER_DATES_FROM': 'future'})
+    if dates and len(dates) > 0:
+        return dates[0][1].strftime("%Y-%m-%d")
+    
+    return None
+
+
+
+
+
+def get_weekday_name(date_str):
+    """Helper to show what day of week a date is"""
+    date = datetime.strptime(date_str, "%Y-%m-%d")
+    return date.strftime("%A")
+
+
 
 
 @server.resource("mongodb://")
@@ -226,6 +356,7 @@ def tasks_by_date(date: str):
     }
 
 
+
 @server.tool(
     name="tasks_by_range",
     description="List tasks within a date range. Supports natural language like 'this week', 'next 7 days', or specific dates like '2025-10-20 to 2025-10-25'."
@@ -238,16 +369,10 @@ def tasks_by_range(start: str, end: str = None):
         start: Start date (natural language or YYYY-MM-DD)
         end: End date (optional, defaults to same as start for single day)
     """
-    # Parse start date with enhanced settings
-    parsed_start = date_parse(
-        start,
-        settings={
-            'PREFER_DATES_FROM': 'future',
-            'RELATIVE_BASE': datetime.now()
-        }
-    )
+    # Use custom parse_due_date (no settings parameter!)
+    start_date_str = parse_due_date(start)
     
-    if not parsed_start:
+    if not start_date_str:
         return {
             "error": f"Could not understand start date: '{start}'. Try '2025-10-20', 'today', 'tomorrow', etc.",
             "received_start": start
@@ -255,28 +380,24 @@ def tasks_by_range(start: str, end: str = None):
 
     # Parse end date
     if end:
-        parsed_end = date_parse(
-            end,
-            settings={
-                'PREFER_DATES_FROM': 'future',
-                'RELATIVE_BASE': parsed_start  # Base end date relative to start
-            }
-        )
-        if not parsed_end:
+        end_date_str = parse_due_date(end)
+        if not end_date_str:
             return {
                 "error": f"Could not understand end date: '{end}'. Try '2025-10-25', 'next week', etc.",
                 "received_end": end
             }
     else:
         # If no end date, assume single day (same as start)
-        parsed_end = parsed_start
+        end_date_str = start_date_str
+
+    # Convert strings to datetime objects for comparison
+    parsed_start = datetime.strptime(start_date_str, "%Y-%m-%d")
+    parsed_end = datetime.strptime(end_date_str, "%Y-%m-%d")
 
     # Ensure start is before or equal to end
     if parsed_start > parsed_end:
         parsed_start, parsed_end = parsed_end, parsed_start
-
-    start_date_str = parsed_start.strftime("%Y-%m-%d")
-    end_date_str = parsed_end.strftime("%Y-%m-%d")
+        start_date_str, end_date_str = end_date_str, start_date_str
 
     # Filter tasks within the date range using MongoDB query
     tasks_in_range = list(tasks_collection.find(
