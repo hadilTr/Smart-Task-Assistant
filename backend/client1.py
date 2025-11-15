@@ -7,6 +7,7 @@ from langchain_core.messages import SystemMessage
 from dotenv import load_dotenv
 import asyncio
 import os
+import sys
 
 load_dotenv()
 
@@ -40,10 +41,13 @@ class TaskAssistantAgent:
     async def setup(self):
         """Initialize the MCP client, tools, and LangGraph workflow."""
         
-    
         api_key_groq = os.getenv("API_KEY_GROQ")
         if not api_key_groq:
             raise ValueError("API_KEY_GROQ not found in environment variables")
+        
+        mongo_uri = os.getenv("MONGO_URI")
+        if not mongo_uri:
+            raise ValueError("MONGO_URI not found in environment variables")
         
         self.model = init_chat_model(
             "llama-3.3-70b-versatile",
@@ -52,24 +56,62 @@ class TaskAssistantAgent:
             temperature=0
         )
         
-        # Setup MCP client with both servers
+        # Get the absolute path to server.py
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        server_path = os.path.join(current_dir, "server.py")
+        
+        # Verify server file exists
+        if not os.path.exists(server_path):
+            raise FileNotFoundError(f"Server file not found at: {server_path}")
+        
+        print(f"🔍 Server path: {server_path}")
+        print(f"🔍 Python executable: {sys.executable}")
+        print(f"🔍 MongoDB URI: {mongo_uri[:40]}...")
+        
+        # CRITICAL: Create a clean environment dict with all necessary variables
+        server_env = os.environ.copy()
+        
+        # Ensure MongoDB URI is explicitly set
+        server_env["MONGO_URI"] = mongo_uri
+        server_env["PYTHONUNBUFFERED"] = "1"
+        
+        # Add current directory to PYTHONPATH so imports work
+        if "PYTHONPATH" in server_env:
+            server_env["PYTHONPATH"] = f"{current_dir}{os.pathsep}{server_env['PYTHONPATH']}"
+        else:
+            server_env["PYTHONPATH"] = current_dir
+        
+        # Setup MCP client with explicit environment
+        print("🔍 Setting up MCP client...")
         self.client = MultiServerMCPClient(
             {
                 "Task management": {
-                    "command": "python",
-                    "args": ["backend/server.py"],
+                    "command": sys.executable,
+                    "args": [server_path],
                     "transport": "stdio",
-                },
-                "Notification": {
-                    "command": "python",
-                    "args": ["backend/server_notif.py"],
-                    "transport": "stdio",
+                    "env": server_env,  # Pass the complete environment
                 }
             }
         )
         
-        tools = await self.client.get_tools()
-        print(f"✅ Loaded {len(tools)} tools from MCP servers")
+        print("🔍 Loading tools from MCP server...")
+        try:
+            tools = await self.client.get_tools()
+            print(f"✅ Loaded {len(tools)} tools from MCP servers")
+            
+            # Print available tools
+            print("\n📋 Available tools:")
+            for tool in tools:
+                print(f"   • {tool.name}: {tool.description}")
+            print()
+                
+        except Exception as e:
+            print(f"❌ Failed to load tools: {e}")
+            print("\n🔧 Troubleshooting:")
+            print("1. Run: python simple_server_test.py")
+            print("2. Check MongoDB connection is working")
+            print("3. Verify .env file has MONGO_URI")
+            raise
         
         model_with_tools = self.model.bind_tools(tools)
         
@@ -170,6 +212,8 @@ class TaskAssistantAgent:
                 break
             except Exception as e:
                 print(f"❌ Error: {e}")
+                import traceback
+                traceback.print_exc()
     
     async def cleanup(self):
         """Clean up resources."""

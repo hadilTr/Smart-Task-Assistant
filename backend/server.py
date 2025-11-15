@@ -5,6 +5,8 @@ from dotenv import load_dotenv
 from mcp.server.fastmcp import FastMCP
 from dateparser import parse as date_parse
 from dateparser.search import search_dates
+from pymongo.server_api import ServerApi
+
 
 load_dotenv()
 
@@ -12,15 +14,36 @@ server = FastMCP(name="SmartTaskAssistantServer")
 
 # MongoDB connection
 MONGO_URI = os.getenv("MONGO_URI")
-client = MongoClient(MONGO_URI)
-db = client["task_manager"]
+client = MongoClient(MONGO_URI,server_api=ServerApi('1'))
+db = client["TaskAssistant"]
 tasks_collection = db["tasks"]
 
+"""try:
+    client.admin.command('ping')
+    print("Pinged your deployment. You successfully connected to MongoDB!")
+except Exception as e:
+    print(e)"""
+    
 
 def get_next_task_id():
     """Generate the next task ID based on existing tasks."""
-    last_task = tasks_collection.find_one(sort=[("id", -1)])
-    return (last_task["id"] + 1) if last_task else 1
+    try:
+        # Only find documents that HAVE an 'id' field
+        last_task = tasks_collection.find_one(
+            filter={"id": {"$exists": True}},  # ← CRITICAL: Only get docs with 'id'
+            sort=[("id", -1)],
+            projection={"id": 1, "_id": 0}  # Only return the 'id' field
+        )
+        
+        if last_task and "id" in last_task:  # ← Double-check 'id' exists
+            return last_task["id"] + 1
+        else:
+            return 1  # No valid tasks found
+            
+    except Exception as e:
+        print(f"⚠️ Error: {e}")
+        # Fallback: count documents and add 1
+        return tasks_collection.count_documents({}) + 1
 
 
 def parse_due_date(date_string: str):
@@ -80,9 +103,10 @@ def add_task(title: str, due_date: str = None):
     }
     
     tasks_collection.insert_one(task)
+
     
     # Remove MongoDB's _id from response
-    task.pop("_id", None)
+    #task.pop("_id", None)
     
     return {
         "message": f"Task added: {title}",
@@ -277,4 +301,5 @@ def tasks_by_range(start: str, end: str = None):
 
 
 if __name__ == "__main__":
-    server.run()
+
+    server.run(transport="stdio")
