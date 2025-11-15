@@ -81,6 +81,11 @@
             animation: pulse 2s infinite;
         }
 
+        .status-dot.disconnected {
+            background: #ef4444;
+            animation: none;
+        }
+
         @keyframes pulse {
             0%, 100% { opacity: 1; }
             50% { opacity: 0.5; }
@@ -140,6 +145,7 @@
             border-radius: 16px;
             line-height: 1.6;
             font-size: 15px;
+            white-space: pre-wrap;
         }
 
         .message.bot .message-content {
@@ -227,7 +233,7 @@
         }
 
         .input-container {
-            padding: 20px 20px;
+            padding: 20px;
             background: white;
             border-top: 1px solid #e2e8f0;
             display: flex;
@@ -266,21 +272,6 @@
             color: #94a3b8;
         }
 
-        .attach-btn {
-            background: none;
-            border: none;
-            color: #94a3b8;
-            cursor: pointer;
-            font-size: 20px;
-            padding: 4px;
-            transition: all 0.2s;
-        }
-
-        .attach-btn:hover {
-            color: #10b981;
-            transform: scale(1.1);
-        }
-
         .send-btn {
             width: 48px;
             height: 48px;
@@ -296,7 +287,7 @@
             justify-content: center;
         }
 
-        .send-btn:hover {
+        .send-btn:hover:not(:disabled) {
             transform: scale(1.05);
             box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
         }
@@ -377,6 +368,15 @@
             font-size: 12px;
             color: #64748b;
         }
+
+        .error-message {
+            background: #fee2e2;
+            color: #991b1b;
+            padding: 12px 18px;
+            border-radius: 12px;
+            margin-bottom: 16px;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
@@ -388,8 +388,8 @@
                 <p>Your intelligent task management assistant</p>
             </div>
             <div class="status-indicator">
-                <div class="status-dot"></div>
-                <span>Online</span>
+                <div class="status-dot" id="statusDot"></div>
+                <span id="statusText">Connecting...</span>
             </div>
         </div>
 
@@ -414,10 +414,10 @@
                         <div class="title">Get Summary</div>
                         <div class="description">Overview of your tasks</div>
                     </div>
-                    <div class="suggestion-card" onclick="sendSuggestion('Send me a notification reminder')">
-                        <div class="icon">🔔</div>
-                        <div class="title">Set Reminder</div>
-                        <div class="description">Get notified about tasks</div>
+                    <div class="suggestion-card" onclick="sendSuggestion('What tasks are due next week?')">
+                        <div class="icon">📅</div>
+                        <div class="title">Check Schedule</div>
+                        <div class="description">View upcoming tasks</div>
                     </div>
                 </div>
             </div>
@@ -427,7 +427,7 @@
             <button class="quick-action-btn" onclick="sendSuggestion('List my tasks')">📋 List Tasks</button>
             <button class="quick-action-btn" onclick="sendSuggestion('Add a new task')">➕ Add Task</button>
             <button class="quick-action-btn" onclick="sendSuggestion('Summarize my progress')">📊 Summary</button>
-            <button class="quick-action-btn" onclick="sendSuggestion('What can you do?')">❓ Help</button>
+            <button class="quick-action-btn" onclick="sendSuggestion('Tasks due next week')">📅 Next Week</button>
         </div>
 
         <div class="typing-indicator" id="typingIndicator">
@@ -444,10 +444,9 @@
                 <input 
                     type="text" 
                     id="userInput" 
-                    placeholder="Type your message... (e.g., 'Add task to buy groceries')"
+                    placeholder="Type your message... (e.g., 'Add task to buy groceries tomorrow')"
                     onkeypress="handleKeyPress(event)"
                 >
-                <button class="attach-btn" title="Coming soon">📎</button>
             </div>
             <button class="send-btn" id="sendBtn" onclick="sendMessage()">
                 ➤
@@ -456,7 +455,99 @@
     </div>
 
     <script>
+        // Configuration
+        const API_BASE = window.location.origin;
+        const USE_WEBSOCKET = true; // Set to false to use REST API instead
+        
+        let ws = null;
         let messageCount = 0;
+        let isConnected = false;
+
+        // Initialize connection on page load
+        window.addEventListener('load', () => {
+            if (USE_WEBSOCKET) {
+                connectWebSocket();
+            } else {
+                updateConnectionStatus(true);
+            }
+            document.getElementById('userInput').focus();
+        });
+
+        function connectWebSocket() {
+            const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${wsProtocol}//${window.location.host}/ws`;
+            
+            console.log('Connecting to WebSocket:', wsUrl);
+            ws = new WebSocket(wsUrl);
+
+            ws.onopen = () => {
+                console.log('✅ WebSocket connected');
+                updateConnectionStatus(true);
+            };
+
+            ws.onmessage = (event) => {
+
+                let data;
+                
+                try{
+                data = JSON.parse(event.data);
+                console.log('📨 Received:', data);
+                } catch (e) {
+                    console.error('Error parsing message:', e);
+                    return;
+                }
+                  
+                console.log('📨 Received JSON:', data);
+
+            
+                if (data.type === 'typing') {
+                    if (data.status === 'started') {
+                        ZshowTypingIndicator();
+                    } else {
+                        hideTypingIndicator();
+                    }
+                } else if (data.type === 'message') {
+                    addMessage(data.response, false);
+                } else if (data.type === 'error') {
+                    showError(data.error);
+                }
+            };
+
+            ws.onerror = (error) => {
+                    console.error('WebSocket error:', error);
+            };
+
+
+            ws.onclose = () => {
+                console.log('👋 WebSocket disconnected');
+                updateConnectionStatus(false);
+                
+                // Attempt to reconnect after 3 seconds
+                setTimeout(() => {
+                    if (!isConnected) {
+                        console.log('🔄 Attempting to reconnect...');
+                        connectWebSocket();
+                    }
+                }, 3000);
+            };
+        }
+
+        function updateConnectionStatus(connected) {
+            isConnected = connected;
+            const statusDot = document.getElementById('statusDot');
+            const statusText = document.getElementById('statusText');
+            const sendBtn = document.getElementById('sendBtn');
+            
+            if (connected) {
+                statusDot.classList.remove('disconnected');
+                statusText.textContent = 'Online';
+                sendBtn.disabled = false;
+            } else {
+                statusDot.classList.add('disconnected');
+                statusText.textContent = 'Offline';
+                sendBtn.disabled = true;
+            }
+        }
 
         function getCurrentTime() {
             const now = new Date();
@@ -468,7 +559,7 @@
             const welcomeScreen = document.getElementById('welcomeScreen');
             const quickActions = document.getElementById('quickActions');
             
-            // Hide welcome screen and show quick actions after first message
+            // Hide welcome screen after first message
             if (messageCount === 0) {
                 welcomeScreen.style.display = 'none';
                 quickActions.style.display = 'flex';
@@ -511,35 +602,57 @@
             indicator.classList.remove('active');
         }
 
+        function showError(message) {
+            hideTypingIndicator();
+            const chatContainer = document.getElementById('chatContainer');
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-message';
+            errorDiv.textContent = `❌ ${message}`;
+            chatContainer.appendChild(errorDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
         async function sendMessage() {
             const input = document.getElementById('userInput');
             const message = input.value.trim();
             
-            if (!message) return;
+            if (!message || !isConnected) return;
             
             // Add user message
             addMessage(message, true);
             input.value = '';
             
-            // Show typing indicator
-            showTypingIndicator();
-            
-            // Simulate API call (replace with actual backend call)
-            setTimeout(() => {
-                hideTypingIndicator();
+            if (USE_WEBSOCKET && ws && ws.readyState === WebSocket.OPEN) {
+                // Send via WebSocket
+                ws.send(message);
+            } else {
+                // Send via REST API
+                showTypingIndicator();
                 
-                // Simulate bot response
-                const responses = [
-                    "✅ I've added that task to your list! Is there anything else you'd like me to do?",
-                    "📋 Here are your current tasks:\n1. Finish project report (Due Friday)\n2. Buy groceries\n3. Call dentist",
-                    "Great! I've marked that task as complete. Keep up the good work! 🎉",
-                    "📊 Task Summary: You have 3 active tasks, 5 completed this week. You're making great progress!",
-                    "🔔 Reminder set! I'll notify you about that task."
-                ];
-                
-                const randomResponse = responses[Math.floor(Math.random() * responses.length)];
-                addMessage(randomResponse, false);
-            }, 1500);
+                try {
+                    const response = await fetch(`${API_BASE}/api/chat`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ message: message })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    hideTypingIndicator();
+                    
+                    if (data.error) {
+                        showError(data.error);
+                    } else {
+                        addMessage(data.response, false);
+                    }
+                } catch (error) {
+                    hideTypingIndicator();
+                    showError('Failed to send message. Please try again.');
+                    console.error('Error:', error);
+                }
+            }
         }
 
         function sendSuggestion(text) {
@@ -549,13 +662,11 @@
         }
 
         function handleKeyPress(event) {
-            if (event.key === 'Enter') {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
                 sendMessage();
             }
         }
-
-        // Focus input on load
-        document.getElementById('userInput').focus();
     </script>
 </body>
 </html>
