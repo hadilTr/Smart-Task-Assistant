@@ -61,9 +61,11 @@ async def shutdown_event():
 async def get_home():
     """Serve the HTML frontend"""
     if frontend_path:
-        html_file = Path(frontend_path)
+       html_file = Path(r"E:\MCP\Smart Task Assistant\chatbot.html")  # Use raw string for Windows path
     else: 
         return {"error": "FRONTEND_PATH environment variable not set"}
+    
+
     if html_file.exists():
         return HTMLResponse(content=html_file.read_text())
     return {"message": "Problem in frontend path"}

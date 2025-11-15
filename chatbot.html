@@ -456,8 +456,8 @@
 
     <script>
         // Configuration
-        const API_BASE = window.location.origin;
-        const USE_WEBSOCKET = true; // Set to false to use REST API instead
+        const API_BASE ="http://localhost:8000" ;
+        const USE_WEBSOCKET = false; // Set to false to use REST API instead
         
         let ws = null;
         let messageCount = 0;
@@ -489,6 +489,10 @@
 
                 let data;
                 
+                if (event.data=="connected"){
+                    console.log('WebSocket connection established.');
+                    return;
+                }
                 try{
                 data = JSON.parse(event.data);
                 console.log('📨 Received:', data);
