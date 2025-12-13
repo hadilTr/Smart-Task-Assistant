@@ -3,12 +3,45 @@ import os
 from dotenv import load_dotenv
 from datetime import datetime
 from mcp.server.fastmcp import FastMCP
-from plyer import notification
-import platform
+from pathlib import Path
 
 load_dotenv()
 
 server = FastMCP(name="DesktopNotificationServer")
+
+# Shared notification storage
+NOTIFICATIONS_FILE = Path(__file__).parent / "notifications.json"
+MAX_HISTORY = 100
+
+
+def add_to_history(notification_type, title, message):
+    """Add notification to shared history file"""
+    try:
+        # Load existing notifications
+        if NOTIFICATIONS_FILE.exists():
+            with open(NOTIFICATIONS_FILE, 'r') as f:
+                notifications = json.load(f)
+        else:
+            notifications = []
+        
+        # Add new notification
+        notifications.insert(0, {
+            "id": len(notifications) + 1,
+            "type": notification_type,
+            "title": title,
+            "message": message,
+            "timestamp": datetime.now().isoformat(),
+            "time": datetime.now().strftime("%I:%M:%S %p")
+        })
+        
+        # Keep only last MAX_HISTORY notifications
+        notifications = notifications[:MAX_HISTORY]
+        
+        # Save back to file
+        with open(NOTIFICATIONS_FILE, 'w') as f:
+            json.dump(notifications, f, indent=2)
+    except Exception as e:
+        print(f"Failed to save notification: {e}")
 
 
 @server.tool(
@@ -22,38 +55,23 @@ def send_desktop_notification(
     app_name: str = "Task Assistant"
 ):
     """
-    Send a desktop notification that appears on your laptop screen.
-    
-    Args:
-        title: Notification title
-        message: Notification message
-        timeout: How long to show notification in seconds (default: 10)
-        app_name: Application name to display (default: "Task Assistant")
+    Store a notification for the browser dashboard (no OS pop-up).
     """
     try:
-        notification.notify(
-            title=title,
-            message=message,
-            app_name=app_name,
-            timeout=timeout
-        )
-        
+        add_to_history("info", title, message)
         return {
             "success": True,
-            "message": "✅ Desktop notification sent!",
+            "message": "✅ Notification stored for browser dashboard!",
             "details": {
                 "title": title,
                 "message": message,
-                "platform": platform.system(),
                 "sent_at": datetime.now().isoformat()
             }
         }
-        
     except Exception as e:
         return {
             "success": False,
-            "error": f"Failed to send notification: {str(e)}",
-            "hint": "Make sure you have notification permissions enabled on your system"
+            "error": f"Failed to store notification: {str(e)}"
         }
 
 
@@ -68,13 +86,7 @@ def send_notification(
     timeout: int = 10
 ):
     """
-    Send a desktop notification with emoji icons.
-    
-    Args:
-        title: Notification title
-        message: Notification message
-        notification_type: 'info', 'success', 'warning', or 'error' (default: 'info')
-        timeout: Duration in seconds (default: 10)
+    Store a formatted notification for the browser dashboard (no OS pop-up).
     """
     icons = {
         "info": "ℹ️",
@@ -82,15 +94,25 @@ def send_notification(
         "warning": "⚠️",
         "error": "❌"
     }
-    
     icon = icons.get(notification_type.lower(), icons["info"])
     formatted_title = f"{icon} {title}"
-    
-    return send_desktop_notification(
-        title=formatted_title,
-        message=message,
-        timeout=timeout
-    )
+    try:
+        add_to_history(notification_type.lower(), title, message)
+        return {
+            "success": True,
+            "message": "✅ Notification stored for browser dashboard!",
+            "details": {
+                "title": formatted_title,
+                "message": message,
+                "type": notification_type,
+                "sent_at": datetime.now().isoformat()
+            }
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": f"Failed to store notification: {str(e)}"
+        }
 
 
 @server.tool(
@@ -103,32 +125,34 @@ def send_task_reminder(
     priority: str = "normal"
 ):
     """
-    Send a task reminder notification.
-    
-    Args:
-        task_name: Name of the task
-        due_time: When the task is due (optional)
-        priority: 'low', 'normal', or 'high' (default: 'normal')
+    Store a task reminder notification for the browser dashboard (no OS pop-up).
     """
     priority_icons = {
         "low": "🔵",
         "normal": "🟡",
         "high": "🔴"
     }
-    
     icon = priority_icons.get(priority.lower(), "🟡")
-    
     message = f"Task: {task_name}"
     if due_time:
         message += f"\nDue: {due_time}"
-    
     title = f"{icon} Task Reminder"
-    
-    return send_desktop_notification(
-        title=title,
-        message=message,
-        timeout=15
-    )
+    try:
+        add_to_history("reminder", title, message)
+        return {
+            "success": True,
+            "message": "✅ Task reminder stored for browser dashboard!",
+            "details": {
+                "title": title,
+                "message": message,
+                "sent_at": datetime.now().isoformat()
+            }
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": f"Failed to store task reminder: {str(e)}"
+        }
 
 
 @server.tool(
@@ -140,17 +164,24 @@ def send_urgent_alert(
     message: str
 ):
     """
-    Send an urgent alert notification that stays visible longer.
-    
-    Args:
-        title: Alert title
-        message: Alert message
+    Store an urgent alert notification for the browser dashboard (no OS pop-up).
     """
-    return send_desktop_notification(
-        title=f"🚨 URGENT: {title}",
-        message=message,
-        timeout=30  # Stays for 30 seconds
-    )
+    try:
+        add_to_history("urgent", f"🚨 URGENT: {title}", message)
+        return {
+            "success": True,
+            "message": "✅ Urgent alert stored for browser dashboard!",
+            "details": {
+                "title": f"🚨 URGENT: {title}",
+                "message": message,
+                "sent_at": datetime.now().isoformat()
+            }
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": f"Failed to store urgent alert: {str(e)}"
+        }
 
 
 @server.tool(
@@ -158,22 +189,23 @@ def send_urgent_alert(
     description="Test if desktop notifications are working."
 )
 def test_notification():
-    """Test desktop notification system."""
-    
-    result = send_desktop_notification(
-        title="🎉 Notification Test",
-        message="If you see this, your notification system is working perfectly!",
-        timeout=5
-    )
-    
-    if result.get("success"):
-        result["next_steps"] = [
-            "Your notification system is configured correctly!",
-            "You can now receive notifications on your laptop",
-            "Try: send_notification('Test', 'Hello World!', 'success')"
-        ]
-    
-    return result
+    """Test browser notification system (stores a test notification)."""
+    try:
+        add_to_history("info", "🎉 Notification Test", "If you see this in your dashboard, your browser notification system is working!")
+        return {
+            "success": True,
+            "message": "Test notification stored for browser dashboard!",
+            "next_steps": [
+                "Your browser notification system is configured correctly!",
+                "You can now receive notifications in your dashboard.",
+                "Try: send_notification('Test', 'Hello World!', 'success')"
+            ]
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": f"Failed to store test notification: {str(e)}"
+        }
 
 
 if __name__ == "__main__":

@@ -8,12 +8,17 @@ import uvicorn
 from pathlib import Path
 from client1 import TaskAssistantAgent
 import os
+import json
+from datetime import datetime
 from dotenv import load_dotenv
 
 app = FastAPI(title="TaskFlow AI API")
 
 load_dotenv()
 frontend_path = os.getenv("FRONTEND_PATH")
+
+# Notification storage file
+NOTIFICATIONS_FILE = Path(__file__).parent / "notifications.json"
 
 
 # Enable CORS for local development
@@ -143,6 +148,44 @@ async def health_check():
     return {
         "status": "healthy",
         "agent_initialized": agent is not None
+    }
+
+
+# Notification API Endpoints
+def load_notifications():
+    """Load notifications from file"""
+    if NOTIFICATIONS_FILE.exists():
+        try:
+            with open(NOTIFICATIONS_FILE, 'r') as f:
+                return json.load(f)
+        except:
+            return []
+    return []
+
+
+@app.get("/api/notifications")
+async def get_notifications():
+    """Get all notifications"""
+    notifications = load_notifications()
+    return notifications
+
+
+@app.delete("/api/notifications")
+async def clear_notifications():
+    """Clear all notifications"""
+    if NOTIFICATIONS_FILE.exists():
+        NOTIFICATIONS_FILE.write_text("[]")
+    return {"success": True, "message": "Notifications cleared"}
+
+
+@app.get("/api/notifications/status")
+async def get_notification_status():
+    """Get notification system status"""
+    notifications = load_notifications()
+    return {
+        "status": "connected",
+        "count": len(notifications),
+        "last_updated": datetime.now().isoformat()
     }
 
 
