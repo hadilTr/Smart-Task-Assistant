@@ -57,18 +57,19 @@ async def shutdown_event():
     print("👋 Agent shutdown complete")
 
 
-@app.get("/")
+@app.get("/", response_class=HTMLResponse)
 async def get_home():
     """Serve the HTML frontend"""
-    if frontend_path:
-       html_file = Path(r"E:\MCP\Smart Task Assistant\chatbot.html")  # Use raw string for Windows path
-    else: 
-        return {"error": "FRONTEND_PATH environment variable not set"}
-    
 
-    if html_file.exists():
-        return HTMLResponse(content=html_file.read_text())
-    return {"message": "Problem in frontend path"}
+    html_file = Path(r"E:\MCP\Smart Task Assistant\chatbot.html")
+
+    if not html_file.exists():
+        return HTMLResponse(
+            content="<h1>Frontend file not found</h1>",
+            status_code=404
+        )
+
+    return html_file.read_text(encoding="utf-8")
 
 
 @app.post("/api/chat")

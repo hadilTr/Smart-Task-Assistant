@@ -1,208 +1,81 @@
 import json
 import os
-import requests
+from dotenv import load_dotenv
 from datetime import datetime
 from mcp.server.fastmcp import FastMCP
+from plyer import notification
+import platform
 
-server = FastMCP(name="EmailNotificationServer")
-CONFIG_FILE = "email_config.json"
+load_dotenv()
 
-
-def load_config():
-    """Load email configuration from file."""
-    if not os.path.exists(CONFIG_FILE):
-        return None
-    with open(CONFIG_FILE, "r") as f:
-        return json.load(f)
-
-
-def save_config(config):
-    """Save email configuration to file."""
-    with open(CONFIG_FILE, "w") as f:
-        json.dump(config, f, indent=2)
+server = FastMCP(name="DesktopNotificationServer")
 
 
 @server.tool(
-    name="configure_testmail",
-    description="Configure Testmail API settings. Required before sending emails."
+    name="send_desktop_notification",
+    description="Show a desktop notification pop-up on your laptop. Works on Windows, Mac, and Linux."
 )
-def configure_testmail(
-    api_key: str,
-    namespace: str,
-    default_from: str = None
+def send_desktop_notification(
+    title: str,
+    message: str,
+    timeout: int = 10,
+    app_name: str = "Task Assistant"
 ):
     """
-    Configure Testmail API settings.
+    Send a desktop notification that appears on your laptop screen.
     
     Args:
-        api_key: Your Testmail API key
-        namespace: Your Testmail namespace
-        default_from: Default sender email address (optional, defaults to 'noreply@{namespace}.testmail.app')
+        title: Notification title
+        message: Notification message
+        timeout: How long to show notification in seconds (default: 10)
+        app_name: Application name to display (default: "Task Assistant")
     """
-    if not default_from:
-        default_from = f"noreply@{namespace}.testmail.app"
-    
-    config = {
-        "api_key": api_key,
-        "namespace": namespace,
-        "default_from": default_from,
-        "configured_at": datetime.now().isoformat()
-    }
-    
-    # Test the API key
     try:
-        headers = {
-            "Authorization": f"Bearer {api_key}",
-            "Content-Type": "application/json"
-        }
+        notification.notify(
+            title=title,
+            message=message,
+            app_name=app_name,
+            timeout=timeout
+        )
         
-        # Make a test request to validate credentials
-        test_url = f"https://api.testmail.app/api/json?apikey={api_key}&namespace={namespace}&livequery=true"
-        response = requests.get(test_url, timeout=10)
-        
-        if response.status_code == 200:
-            save_config(config)
-            return {
-                "message": "Testmail configuration successful! API key verified.",
-                "config": {
-                    "namespace": namespace,
-                    "default_from": default_from,
-                    "inbox_url": f"https://testmail.app/inbox/{namespace}"
-                }
-            }
-        elif response.status_code == 401:
-            return {
-                "error": "Authentication failed. Invalid API key.",
-                "hint": "Check your API key at https://testmail.app/account"
-            }
-        else:
-            return {
-                "error": f"API test failed with status code: {response.status_code}",
-                "response": response.text
-            }
-            
-    except requests.exceptions.RequestException as e:
         return {
-            "error": f"Connection failed: {str(e)}",
-            "hint": "Check your internet connection and try again."
+            "success": True,
+            "message": "✅ Desktop notification sent!",
+            "details": {
+                "title": title,
+                "message": message,
+                "platform": platform.system(),
+                "sent_at": datetime.now().isoformat()
+            }
         }
-
-
-@server.tool(
-    name="send_email",
-    description="Send an email using Testmail. Supports HTML content and multiple recipients."
-)
-def send_email(
-    to: str,
-    subject: str,
-    body: str,
-    from_email: str = None,
-    html: bool = True
-):
-    """
-    Send an email notification.
-    
-    Args:
-        to: Recipient email address (e.g., 'user.66jry@inbox.testmail.app')
-        subject: Email subject line
-        body: Email body content (supports HTML if html=True)
-        from_email: Sender email (optional, uses configured default)
-        html: Send as HTML email (default: True)
-    """
-    config = load_config()
-    
-    if not config:
+        
+    except Exception as e:
         return {
-            "error": "Testmail not configured. Please use 'configure_testmail' tool first.",
-            "hint": "Run configure_testmail with your API key and namespace."
-        }
-    
-    try:
-        url = "https://api.testmail.app/api/send"
-        
-        headers = {
-            "Authorization": f"Bearer {config['api_key']}",
-            "Content-Type": "application/json"
-        }
-        
-        payload = {
-            "from": from_email or config['default_from'],
-            "to": to,
-            "subject": subject,
-        }
-        
-        if html:
-            payload["html"] = body
-            # Also include text version
-            plain_text = body.replace('<br>', '\n').replace('<br/>', '\n')
-            # Simple HTML tag removal
-            import re
-            plain_text = re.sub('<[^<]+?>', '', plain_text)
-            payload["text"] = plain_text
-        else:
-            payload["text"] = body
-        
-        response = requests.post(url, json=payload, headers=headers, timeout=30)
-        
-        if response.status_code == 200:
-            result = response.json()
-            return {
-                "message": "Email sent successfully!",
-                "details": {
-                    "to": to,
-                    "subject": subject,
-                    "from": payload["from"],
-                    "sent_at": datetime.now().isoformat(),
-                    "message_id": result.get("message_id", "N/A")
-                }
-            }
-        elif response.status_code == 401:
-            return {
-                "error": "Authentication failed. API key may have expired.",
-                "hint": "Re-run configure_testmail with updated credentials."
-            }
-        else:
-            return {
-                "error": f"Failed to send email. Status code: {response.status_code}",
-                "response": response.text
-            }
-            
-    except requests.exceptions.RequestException as e:
-        return {
-            "error": f"Failed to send email: {str(e)}",
-            "hint": "Check your internet connection and recipient address."
+            "success": False,
+            "error": f"Failed to send notification: {str(e)}",
+            "hint": "Make sure you have notification permissions enabled on your system"
         }
 
 
 @server.tool(
     name="send_notification",
-    description="Send a quick notification email with a pre-formatted template. Ideal for alerts, reminders, and status updates."
+    description="Send a formatted notification with different types (info, success, warning, error)."
 )
 def send_notification(
-    to: str,
     title: str,
     message: str,
     notification_type: str = "info",
-    from_email: str = None
+    timeout: int = 10
 ):
     """
-    Send a formatted notification email.
+    Send a desktop notification with emoji icons.
     
     Args:
-        to: Recipient email address (e.g., 'user.66jry@inbox.testmail.app')
-        title: Notification title/subject
-        message: Notification message content
-        notification_type: Type of notification - 'info', 'success', 'warning', 'error' (default: 'info')
-        from_email: Sender email (optional)
+        title: Notification title
+        message: Notification message
+        notification_type: 'info', 'success', 'warning', or 'error' (default: 'info')
+        timeout: Duration in seconds (default: 10)
     """
-    # Color scheme for notification types
-    colors = {
-        "info": "#3b82f6",      # blue
-        "success": "#10b981",    # green
-        "warning": "#f59e0b",    # amber
-        "error": "#ef4444"       # red
-    }
-    
     icons = {
         "info": "ℹ️",
         "success": "✅",
@@ -210,162 +83,97 @@ def send_notification(
         "error": "❌"
     }
     
-    color = colors.get(notification_type.lower(), colors["info"])
     icon = icons.get(notification_type.lower(), icons["info"])
+    formatted_title = f"{icon} {title}"
     
-    # Create HTML body
-    html_body = f"""
-    <html>
-        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-            <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-                <div style="background-color: {color}; color: white; padding: 15px; border-radius: 5px 5px 0 0;">
-                    <h2 style="margin: 0;">{icon} {title}</h2>
-                </div>
-                <div style="background-color: #f9fafb; padding: 20px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 5px 5px;">
-                    <p style="margin: 0; white-space: pre-wrap;">{message}</p>
-                    <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
-                    <p style="font-size: 12px; color: #6b7280; margin: 0;">
-                        Sent at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-                    </p>
-                </div>
-            </div>
-        </body>
-    </html>
-    """
-    
-    subject = f"[{notification_type.upper()}] {title}"
-    
-    return send_email(
-        to=to,
-        subject=subject,
-        body=html_body,
-        from_email=from_email,
-        html=True
+    return send_desktop_notification(
+        title=formatted_title,
+        message=message,
+        timeout=timeout
     )
 
 
 @server.tool(
-    name="get_inbox_emails",
-    description="Retrieve emails from a Testmail inbox. Useful for checking sent emails and verifying delivery."
+    name="send_task_reminder",
+    description="Send a task reminder notification."
 )
-def get_inbox_emails(
-    tag: str = None,
-    limit: int = 10
+def send_task_reminder(
+    task_name: str,
+    due_time: str = None,
+    priority: str = "normal"
 ):
     """
-    Get emails from Testmail inbox.
+    Send a task reminder notification.
     
     Args:
-        tag: Inbox tag/user (optional, retrieves from all inboxes if not specified)
-        limit: Maximum number of emails to retrieve (default: 10, max: 50)
+        task_name: Name of the task
+        due_time: When the task is due (optional)
+        priority: 'low', 'normal', or 'high' (default: 'normal')
     """
-    config = load_config()
+    priority_icons = {
+        "low": "🔵",
+        "normal": "🟡",
+        "high": "🔴"
+    }
     
-    if not config:
-        return {
-            "error": "Testmail not configured. Please use 'configure_testmail' tool first."
-        }
+    icon = priority_icons.get(priority.lower(), "🟡")
     
-    try:
-        # Build URL
-        url = f"https://api.testmail.app/api/json"
-        params = {
-            "apikey": config['api_key'],
-            "namespace": config['namespace'],
-            "limit": min(limit, 50)
-        }
-        
-        if tag:
-            params["tag"] = tag
-        
-        response = requests.get(url, params=params, timeout=30)
-        
-        if response.status_code == 200:
-            data = response.json()
-            emails = data.get("emails", [])
-            
-            # Format emails for readability
-            formatted_emails = []
-            for email in emails:
-                formatted_emails.append({
-                    "from": email.get("from"),
-                    "to": email.get("to"),
-                    "subject": email.get("subject"),
-                    "timestamp": email.get("timestamp"),
-                    "html": email.get("html", "")[:200] + "..." if len(email.get("html", "")) > 200 else email.get("html", ""),
-                    "text": email.get("text", "")[:200] + "..." if len(email.get("text", "")) > 200 else email.get("text", "")
-                })
-            
-            return {
-                "count": len(formatted_emails),
-                "emails": formatted_emails,
-                "inbox_url": f"https://testmail.app/inbox/{config['namespace']}" + (f"/{tag}" if tag else "")
-            }
-        else:
-            return {
-                "error": f"Failed to retrieve emails. Status code: {response.status_code}",
-                "response": response.text
-            }
-            
-    except requests.exceptions.RequestException as e:
-        return {
-            "error": f"Failed to retrieve emails: {str(e)}"
-        }
+    message = f"Task: {task_name}"
+    if due_time:
+        message += f"\nDue: {due_time}"
+    
+    title = f"{icon} Task Reminder"
+    
+    return send_desktop_notification(
+        title=title,
+        message=message,
+        timeout=15
+    )
 
 
 @server.tool(
-    name="get_email_config",
-    description="View current Testmail configuration (API key is partially hidden for security)."
+    name="send_urgent_alert",
+    description="Send an urgent alert that stays visible longer."
 )
-def get_email_config():
-    """Get current email configuration."""
-    config = load_config()
+def send_urgent_alert(
+    title: str,
+    message: str
+):
+    """
+    Send an urgent alert notification that stays visible longer.
     
-    if not config:
-        return {
-            "configured": False,
-            "message": "Testmail is not configured. Use 'configure_testmail' tool to set up."
-        }
-    
-    # Return config with masked API key
-    safe_config = config.copy()
-    api_key = safe_config['api_key']
-    safe_config['api_key'] = api_key[:8] + "..." + api_key[-8:] if len(api_key) > 16 else "***HIDDEN***"
-    
-    return {
-        "configured": True,
-        "config": safe_config,
-        "inbox_url": f"https://testmail.app/inbox/{config['namespace']}"
-    }
+    Args:
+        title: Alert title
+        message: Alert message
+    """
+    return send_desktop_notification(
+        title=f"🚨 URGENT: {title}",
+        message=message,
+        timeout=30  # Stays for 30 seconds
+    )
 
 
 @server.tool(
-    name="generate_test_email",
-    description="Generate a test email address for your namespace. Use this address to receive test emails."
+    name="test_notification",
+    description="Test if desktop notifications are working."
 )
-def generate_test_email(tag: str):
-    """
-    Generate a test email address.
+def test_notification():
+    """Test desktop notification system."""
     
-    Args:
-        tag: Unique identifier for the inbox (e.g., 'user1', 'test', 'alerts')
-    """
-    config = load_config()
+    result = send_desktop_notification(
+        title="🎉 Notification Test",
+        message="If you see this, your notification system is working perfectly!",
+        timeout=5
+    )
     
-    if not config:
-        return {
-            "error": "Testmail not configured. Please use 'configure_testmail' tool first."
-        }
+    if result.get("success"):
+        result["next_steps"] = [
+            "Your notification system is configured correctly!",
+            "You can now receive notifications on your laptop",
+            "Try: send_notification('Test', 'Hello World!', 'success')"
+        ]
     
-    email_address = f"{tag}.{config['namespace']}@inbox.testmail.app"
-    
-    return {
-        "email": email_address,
-        "tag": tag,
-        "namespace": config['namespace'],
-        "inbox_url": f"https://testmail.app/inbox/{config['namespace']}/{tag}",
-        "message": f"Use this email to receive test messages. View inbox at the URL above."
-    }
+    return result
 
 
 if __name__ == "__main__":

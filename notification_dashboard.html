@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notification Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .status.connected {
+            background: #10b981;
+            color: white;
+        }
+
+        .status.disconnected {
+            background: #ef4444;
+            color: white;
+        }
+
+        .notifications {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .notification {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            animation: slideIn 0.3s ease-out;
+            position: relative;
+            overflow: hidden;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(-100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .notification::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 5px;
+        }
+
+        .notification.info::before { background: #3b82f6; }
+        .notification.success::before { background: #10b981; }
+        .notification.warning::before { background: #f59e0b; }
+        .notification.error::before { background: #ef4444; }
+
+        .notification-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .notification-icon {
+            font-size: 24px;
+            margin-right: 12px;
+        }
+
+        .notification-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            flex: 1;
+        }
+
+        .notification-time {
+            font-size: 12px;
+            color: #999;
+        }
+
+        .notification-message {
+            color: #666;
+            line-height: 1.6;
+            margin-left: 36px;
+        }
+
+        .test-controls {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-top: 20px;
+        }
+
+        .test-controls h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .btn-info { background: #3b82f6; color: white; }
+        .btn-success { background: #10b981; color: white; }
+        .btn-warning { background: #f59e0b; color: white; }
+        .btn-error { background: #ef4444; color: white; }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: white;
+        }
+
+        .empty-state-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+
+        .clear-btn {
+            background: #6b7280;
+            color: white;
+            margin-left: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📬 Notification Dashboard</h1>
+            <p style="color: #666; margin: 10px 0;">Real-time notifications on your laptop</p>
+            <div class="status connected" id="status">🟢 Connected</div>
+        </div>
+
+        <div class="notifications" id="notifications">
+            <div class="empty-state">
+                <div class="empty-state-icon">🔔</div>
+                <h2>No notifications yet</h2>
+                <p>Notifications will appear here in real-time</p>
+            </div>
+        </div>
+
+        <div class="test-controls">
+            <div style="display: flex; align-items: center; margin-bottom: 15px;">
+                <h3 style="margin: 0;">Test Notifications</h3>
+                <button class="clear-btn" onclick="clearNotifications()">Clear All</button>
+            </div>
+            <div class="button-group">
+                <button class="btn-info" onclick="sendTest('info')">📘 Info</button>
+                <button class="btn-success" onclick="sendTest('success')">✅ Success</button>
+                <button class="btn-warning" onclick="sendTest('warning')">⚠️ Warning</button>
+                <button class="btn-error" onclick="sendTest('error')">❌ Error</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const notificationsContainer = document.getElementById('notifications');
+        let notifications = [];
+
+        const icons = {
+            info: 'ℹ️',
+            success: '✅',
+            warning: '⚠️',
+            error: '❌'
+        };
+
+        function addNotification(type, title, message) {
+            // Request browser notification permission
+            if (Notification.permission === 'granted') {
+                new Notification(title, {
+                    body: message,
+                    icon: '🔔'
+                });
+            }
+
+            const notification = {
+                id: Date.now(),
+                type,
+                title,
+                message,
+                time: new Date().toLocaleTimeString()
+            };
+
+            notifications.unshift(notification);
+            renderNotifications();
+        }
+
+        function renderNotifications() {
+            if (notifications.length === 0) {
+                notificationsContainer.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🔔</div>
+                        <h2>No notifications yet</h2>
+                        <p>Notifications will appear here in real-time</p>
+                    </div>
+                `;
+                return;
+            }
+
+            notificationsContainer.innerHTML = notifications.map(n => `
+                <div class="notification ${n.type}">
+                    <div class="notification-header">
+                        <div class="notification-icon">${icons[n.type]}</div>
+                        <div class="notification-title">${n.title}</div>
+                        <div class="notification-time">${n.time}</div>
+                    </div>
+                    <div class="notification-message">${n.message}</div>
+                </div>
+            `).join('');
+        }
+
+        function sendTest(type) {
+            const messages = {
+                info: {
+                    title: 'Information',
+                    message: 'This is an informational notification'
+                },
+                success: {
+                    title: 'Task Completed',
+                    message: 'Your task has been completed successfully!'
+                },
+                warning: {
+                    title: 'Warning',
+                    message: 'This action requires your attention'
+                },
+                error: {
+                    title: 'Error Occurred',
+                    message: 'Something went wrong. Please try again.'
+                }
+            };
+
+            const msg = messages[type];
+            addNotification(type, msg.title, msg.message);
+        }
+
+        function clearNotifications() {
+            notifications = [];
+            renderNotifications();
+        }
+
+        // Request notification permission on load
+        if (Notification.permission === 'default') {
+            Notification.requestPermission();
+        }
+
+        // Expose function to be called from Python
+        window.addNotification = addNotification;
+
+        // Simulate connection status
+        setInterval(() => {
+            const status = document.getElementById('status');
+            if (Math.random() > 0.95) {
+                status.className = 'status disconnected';
+                status.innerHTML = '🔴 Reconnecting...';
+                setTimeout(() => {
+                    status.className = 'status connected';
+                    status.innerHTML = '🟢 Connected';
+                }, 2000);
+            }
+        }, 5000);
+    </script>
+</body>
+</html>

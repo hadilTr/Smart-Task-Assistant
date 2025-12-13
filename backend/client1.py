@@ -12,7 +12,7 @@ import sys
 load_dotenv()
 
 # System prompt for the agent
-SYSTEM_PROMPT = """You are a helpful and friendly task management assistant. Your role is to help users manage their tasks efficiently and send notifications.
+SYSTEM_PROMPT = """You are a helpful and friendly task management assistant. Your role is to help users manage their tasks efficiently and send desktop notifications.
 
 When the user asks to do something with their tasks, analyze their intent and call the appropriate function:
 - add_task: When they want to create a new task or reminder
@@ -20,7 +20,13 @@ When the user asks to do something with their tasks, analyze their intent and ca
 - complete_task: When they want to mark a task as done (make sure you have the task ID)
 - delete_task: When they want to remove a task
 - summarize_tasks: When they want an overview or summary
-- send_notification: When they want to send a notification or reminder
+
+For notifications (desktop pop-ups on their laptop):
+- send_desktop_notification: Send a basic desktop notification
+- send_notification: Send a formatted notification with types (info, success, warning, error)
+- send_task_reminder: Send a task reminder notification with priority
+- send_urgent_alert: Send an urgent alert that stays visible longer
+- test_notification: Test if desktop notifications are working
 
 Be conversational and friendly. After executing a function, provide a natural response based on the results.
 If you need more information (like a task ID or notification details), ask the user politely.
@@ -80,6 +86,9 @@ class TaskAssistantAgent:
             server_env["PYTHONPATH"] = f"{current_dir}{os.pathsep}{server_env['PYTHONPATH']}"
         else:
             server_env["PYTHONPATH"] = current_dir
+
+        # Get path to notification server
+        notif_server_path = os.path.join(current_dir, "server_notif.py")
         
         # Setup MCP client with explicit environment
         print("🔍 Setting up MCP client...")
@@ -90,6 +99,12 @@ class TaskAssistantAgent:
                     "args": [server_path],
                     "transport": "stdio",
                     "env": server_env,  # Pass the complete environment
+                },
+                "Desktop notifications": {
+                    "command": sys.executable,
+                    "args": [notif_server_path],
+                    "transport": "stdio",
+                    "env": server_env,
                 }
             }
         )
