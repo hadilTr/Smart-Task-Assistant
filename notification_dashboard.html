@@ -12,72 +12,240 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            background: #f5f7fa;
             min-height: 100vh;
-            padding: 20px;
         }
 
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
+        .dashboard {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            min-height: 100vh;
         }
 
-        .header {
-            background: white;
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            margin-bottom: 20px;
-            text-align: center;
+        /* Sidebar */
+        .sidebar {
+            background: #1e293b;
+            color: white;
+            padding: 24px;
+            box-shadow: 2px 0 8px rgba(0,0,0,0.1);
         }
 
-        .header h1 {
-            color: #333;
-            margin-bottom: 10px;
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 32px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .logo h2 {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .status-card {
+            background: rgba(255,255,255,0.05);
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 24px;
+        }
+
+        .status-label {
+            font-size: 12px;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
         }
 
         .status {
-            display: inline-block;
-            padding: 8px 16px;
-            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
             font-size: 14px;
             font-weight: 600;
         }
 
-        .status.connected {
-            background: #10b981;
-            color: white;
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
         }
 
-        .status.disconnected {
+        .status.connected .status-dot {
+            background: #10b981;
+        }
+
+        .status.disconnected .status-dot {
             background: #ef4444;
-            color: white;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .test-controls {
+            margin-top: 24px;
+        }
+
+        .test-controls h3 {
+            font-size: 14px;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 16px;
+        }
+
+        .button-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        button {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        button:hover {
+            transform: translateX(2px);
+        }
+
+        .btn-info { background: #3b82f6; color: white; }
+        .btn-success { background: #10b981; color: white; }
+        .btn-warning { background: #f59e0b; color: white; }
+        .btn-error { background: #ef4444; color: white; }
+        .clear-btn { background: #6b7280; color: white; }
+
+        .btn-info:hover { background: #2563eb; }
+        .btn-success:hover { background: #059669; }
+        .btn-warning:hover { background: #d97706; }
+        .btn-error:hover { background: #dc2626; }
+        .clear-btn:hover { background: #4b5563; }
+
+        /* Main Content */
+        .main-content {
+            padding: 32px;
+            overflow-y: auto;
+        }
+
+        .header {
+            margin-bottom: 32px;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            color: #1e293b;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border: 1px solid #e2e8f0;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .notifications-section {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border: 1px solid #e2e8f0;
+            overflow: hidden;
+        }
+
+        .section-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .section-header h2 {
+            font-size: 18px;
+            color: #1e293b;
+            font-weight: 600;
         }
 
         .notifications {
             display: flex;
             flex-direction: column;
-            gap: 15px;
         }
 
         .notification {
-            background: white;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            animation: slideIn 0.3s ease-out;
+            padding: 20px 24px;
+            border-bottom: 1px solid #e2e8f0;
             position: relative;
-            overflow: hidden;
+            transition: background 0.2s;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .notification:last-child {
+            border-bottom: none;
+        }
+
+        .notification:hover {
+            background: #f8fafc;
         }
 
         @keyframes slideIn {
             from {
-                transform: translateX(-100%);
+                transform: translateY(-20px);
                 opacity: 0;
             }
             to {
-                transform: translateX(0);
+                transform: translateY(0);
                 opacity: 1;
             }
         }
@@ -88,7 +256,7 @@
             left: 0;
             top: 0;
             bottom: 0;
-            width: 5px;
+            width: 4px;
         }
 
         .notification.info::before { background: #3b82f6; }
@@ -98,123 +266,332 @@
 
         .notification-header {
             display: flex;
-            align-items: center;
-            margin-bottom: 10px;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 8px;
         }
 
         .notification-icon {
-            font-size: 24px;
-            margin-right: 12px;
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .notification.info .notification-icon { background: #dbeafe; }
+        .notification.success .notification-icon { background: #d1fae5; }
+        .notification.warning .notification-icon { background: #fef3c7; }
+        .notification.error .notification-icon { background: #fee2e2; }
+
+        .notification-content {
+            flex: 1;
+            min-width: 0;
         }
 
         .notification-title {
-            font-size: 18px;
+            font-size: 15px;
             font-weight: 600;
-            color: #333;
-            flex: 1;
+            color: #1e293b;
+            margin-bottom: 4px;
+        }
+
+        .notification-message {
+            color: #64748b;
+            font-size: 14px;
+            line-height: 1.5;
         }
 
         .notification-time {
             font-size: 12px;
-            color: #999;
+            color: #94a3b8;
+            white-space: nowrap;
         }
-
-        .notification-message {
-            color: #666;
-            line-height: 1.6;
-            margin-left: 36px;
-        }
-
-        .test-controls {
-            background: white;
-            padding: 25px;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            margin-top: 20px;
-        }
-
-        .test-controls h3 {
-            margin-bottom: 15px;
-            color: #333;
-        }
-
-        .button-group {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-
-        button {
-            padding: 12px 24px;
-            border: none;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        }
-
-        .btn-info { background: #3b82f6; color: white; }
-        .btn-success { background: #10b981; color: white; }
-        .btn-warning { background: #f59e0b; color: white; }
-        .btn-error { background: #ef4444; color: white; }
 
         .empty-state {
             text-align: center;
-            padding: 60px 20px;
-            color: white;
+            padding: 80px 20px;
+            color: #94a3b8;
         }
 
         .empty-state-icon {
-            font-size: 64px;
-            margin-bottom: 20px;
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
         }
 
-        .clear-btn {
-            background: #6b7280;
+        .empty-state h3 {
+            font-size: 16px;
+            color: #64748b;
+            margin-bottom: 8px;
+        }
+
+        .empty-state p {
+            font-size: 14px;
+            color: #94a3b8;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                display: none;
+            }
+        }
+
+        /* Chatbot */
+        .chatbot-section {
+            margin-top: 32px;
+        }
+
+        .chatbot-section iframe {
+            width: 100%;
+            height: 500px;
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .chatbot-container {
+            position: fixed;
+            bottom: 0px;
+            right: 20px;
+            width: 300px;
+            max-height: 500px;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px 12px 0 0;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            transition: transform 0.3s ease;
+            transform: translateY(100%);
+        }
+
+        .chatbot-container.open {
+            transform: translateY(0);
+        }
+
+        .chatbot-header {
+            background: #1e293b;
             color: white;
-            margin-left: auto;
+            padding: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .chatbot-header span {
+            font-size: 18px;
+        }
+
+        .chatbot-iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>📬 Notification Dashboard</h1>
-            <p style="color: #666; margin: 10px 0;">Real-time notifications on your laptop</p>
-            <div class="status connected" id="status">🟢 Connected</div>
-        </div>
+    <div class="dashboard">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <div class="logo-icon">📬</div>
+                <h2>Notifications</h2>
+            </div>
 
-        <div class="notifications" id="notifications">
-            <div class="empty-state">
-                <div class="empty-state-icon">🔔</div>
-                <h2>No notifications yet</h2>
-                <p>Notifications will appear here in real-time</p>
+            <div class="status-card">
+                <div class="status-label">System Status</div>
+                <div class="status connected" id="status">
+                    <span class="status-dot"></span>
+                    <span>Connected</span>
+                </div>
+            </div>
+
+            <div class="test-controls">
+                <h3>Test Controls</h3>
+                <div class="button-group">
+                    <button class="btn-info" onclick="sendTest('info')">
+                        <span>📘</span>
+                        <span>Send Info</span>
+                    </button>
+                    <button class="btn-success" onclick="sendTest('success')">
+                        <span>✅</span>
+                        <span>Send Success</span>
+                    </button>
+                    <button class="btn-warning" onclick="sendTest('warning')">
+                        <span>⚠️</span>
+                        <span>Send Warning</span>
+                    </button>
+                    <button class="btn-error" onclick="sendTest('error')">
+                        <span>❌</span>
+                        <span>Send Error</span>
+                    </button>
+                    <button class="clear-btn" onclick="clearNotifications()">
+                        <span>🗑️</span>
+                        <span>Clear All</span>
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="header">
+                <h1>Dashboard</h1>
+                <p>Monitor and manage your real-time notifications</p>
+
+                <div class="top-task-stats" style="display:flex;gap:12px;margin-top:12px;">
+                    <div class="task-stat-card" id="stat-total" style="background:white;padding:10px 12px;border-radius:10px;box-shadow:0 1px 3px rgba(0,0,0,0.06);display:flex;flex-direction:column;align-items:flex-start;">
+                        <div style="font-size:12px;color:#10b981;font-weight:700;">✅ Total Tasks</div>
+                        <div id="stat-total-val" style="font-size:18px;font-weight:700;color:#1e293b;">0</div>
+                    </div>
+                    <div class="task-stat-card" id="stat-pending" style="background:white;padding:10px 12px;border-radius:10px;box-shadow:0 1px 3px rgba(0,0,0,0.06);display:flex;flex-direction:column;align-items:flex-start;">
+                        <div style="font-size:12px;color:#f59e0b;font-weight:700;">⏳ Pending / In Progress</div>
+                        <div id="stat-pending-val" style="font-size:18px;font-weight:700;color:#1e293b;">0</div>
+                    </div>
+                    <div class="task-stat-card" id="stat-overdue" style="background:white;padding:10px 12px;border-radius:10px;box-shadow:0 1px 3px rgba(0,0,0,0.06);display:flex;flex-direction:column;align-items:flex-start;">
+                        <div style="font-size:12px;color:#ef4444;font-weight:700;">🔥 Overdue Tasks</div>
+                        <div id="stat-overdue-val" style="font-size:18px;font-weight:700;color:#1e293b;">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stats">
+                <!-- Task stats moved above; notification summary cards removed -->
+            </div>
+
+            <div class="notifications-section">
+                <div class="section-header">
+                    <h2>Recent Notifications</h2>
+                </div>
+                <div class="notifications" id="notifications">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🔔</div>
+                        <h3>No notifications yet</h3>
+                        <p>Notifications will appear here in real-time</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ...existing code... (removed large embedded chatbot iframe) -->
+        </main>
+    </div>
+
+    <div class="chatbot-container" id="chatbot">
+
+        <div class="chatbot-header" id="chatbotHeader">
+            <div style="display:flex; align-items:center; gap:8px;">
+                <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#ff7a18,#ffb86b);display:flex;align-items:center;justify-content:center;font-size:18px;">🤖</div>
+                <div>
+                    <div style="font-weight:700;">Atendente Virtual</div>
+                    <div style="font-size:11px;color:rgba(255,255,255,0.9);">Online</div>
+                </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+                <button id="chatMinimizeBtn" style="background:transparent;border:none;color:white;font-size:18px;cursor:pointer">—</button>
+                <button id="chatCloseBtn" style="background:transparent;border:none;color:white;font-size:18px;cursor:pointer">×</button>
             </div>
         </div>
 
-        <div class="test-controls">
-            <div style="display: flex; align-items: center; margin-bottom: 15px;">
-                <h3 style="margin: 0;">Test Notifications</h3>
-                <button class="clear-btn" onclick="clearNotifications()">Clear All</button>
+        <div class="chatbot-body" id="chatbotBody">
+            <!-- Embedded chatbot UI (from chatbot.html) -->
+            <div class="chat-container" id="chatContainer" style="flex:1;overflow-y:auto;padding:12px;background:#f8fafc;">
+                <div class="welcome-screen" id="welcomeScreen" style="display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px;height:100%;">
+                    <div class="welcome-icon" style="font-size:48px;margin-bottom:16px;">🚀</div>
+                    <h2 style="font-size:20px;color:#1e293b;margin-bottom:8px;">Welcome to TaskFlow AI</h2>
+                    <p style="font-size:13px;color:#64748b;margin-bottom:16px;">Try one of these to get started:</p>
+                    <div class="suggestion-cards" style="display:flex;flex-direction:column;gap:8px;width:100%;">
+                        <div class="suggestion-card" data-suggestion="Add a task to finish the project report by Friday" style="padding:10px;border:1px solid #e2e8f0;border-radius:8px;cursor:pointer;background:white;text-align:left;">📝 Add Task</div>
+                        <div class="suggestion-card" data-suggestion="Show me all my tasks" style="padding:10px;border:1px solid #e2e8f0;border-radius:8px;cursor:pointer;background:white;text-align:left;">📋 View Tasks</div>
+                        <div class="suggestion-card" data-suggestion="Summarize my tasks" style="padding:10px;border:1px solid #e2e8f0;border-radius:8px;cursor:pointer;background:white;text-align:left;">📊 Get Summary</div>
+                        <div class="suggestion-card" data-suggestion="What tasks are due next week?" style="padding:10px;border:1px solid #e2e8f0;border-radius:8px;cursor:pointer;background:white;text-align:left;">📅 Check Schedule</div>
+                    </div>
+                </div>
             </div>
-            <div class="button-group">
-                <button class="btn-info" onclick="sendTest('info')">📘 Info</button>
-                <button class="btn-success" onclick="sendTest('success')">✅ Success</button>
-                <button class="btn-warning" onclick="sendTest('warning')">⚠️ Warning</button>
-                <button class="btn-error" onclick="sendTest('error')">❌ Error</button>
+
+            <div class="quick-actions" id="quickActions" style="display:none;padding:8px;border-top:1px solid #eef2f7;background:#fff;overflow-x:auto;gap:6px;">
+                <button class="quick-action-btn" onclick="sendSuggestion('List my tasks')" style="padding:6px 12px;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:16px;font-size:12px;color:#475569;cursor:pointer;white-space:nowrap;">📋 List Tasks</button>
+                <button class="quick-action-btn" onclick="sendSuggestion('Add a new task')" style="padding:6px 12px;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:16px;font-size:12px;color:#475569;cursor:pointer;white-space:nowrap;">➕ Add Task</button>
+                <button class="quick-action-btn" onclick="sendSuggestion('Summarize my progress')" style="padding:6px 12px;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:16px;font-size:12px;color:#475569;cursor:pointer;white-space:nowrap;">📊 Summary</button>
+            </div>
+
+            <div class="typing-indicator" id="typingIndicator" style="display:none;align-items:center;gap:8px;padding:8px 12px;background:#fff;border-top:1px solid #eef2f7;">
+                <div class="avatar bot" style="width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#10b981,#059669);display:flex;align-items:center;justify-content:center;">🤖</div>
+                <div class="typing-dots" style="display:flex;gap:4px;padding:6px 10px;border-radius:12px;background:#fff;">
+                    <span style="width:6px;height:6px;background:#94a3b8;border-radius:50%;animation:typing 1.4s infinite;"></span>
+                    <span style="width:6px;height:6px;background:#94a3b8;border-radius:50%;animation:typing 1.4s infinite 0.2s;"></span>
+                    <span style="width:6px;height:6px;background:#94a3b8;border-radius:50%;animation:typing 1.4s infinite 0.4s;"></span>
+                </div>
+            </div>
+
+            <div class="input-container" style="padding:10px;background:white;border-top:1px solid #e6edf3;display:flex;gap:8px;align-items:center;">
+                <div class="input-wrapper" style="flex:1;display:flex;align-items:center;background:#f8fafc;padding:8px 12px;border-radius:20px;">
+                    <input id="userInput" placeholder="Type your message..." style="flex:1;border:none;background:transparent;outline:none;font-size:14px;" onkeypress="handleKeyPress(event)">
+                </div>
+                <button class="send-btn" id="sendBtn" onclick="sendMessage()" style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#10b981,#059669);border:none;color:white;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;">➤</button>
             </div>
         </div>
     </div>
 
+    <style>
+        /* Chatbot widget styles (collapsed header visible, expands on open) */
+        .chatbot-container {
+            position: fixed;
+            bottom: 55px;
+            right: 50px;
+            width: 360px;
+            height: 60px;
+            background: linear-gradient(90deg,#ff7a18,#ffb86b);
+            border-radius: 12px;
+            box-shadow: 0 6px 24px rgba(15,23,42,0.2);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transition: height 0.32s ease, width 0.2s ease;
+            z-index: 9999;
+        }
+
+        .chatbot-container.open {
+            height: 520px;
+            width: 380px;
+            border-radius: 12px;
+            background: transparent;
+        }
+
+        .chatbot-header {
+            padding: 10px 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .chatbot-body {
+            background: white;
+            height: calc(100% - 60px);
+            display: flex;
+            flex-direction: column;
+        }
+
+        @keyframes typing {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-6px); }
+        }
+    </style>
+
     <script>
         const notificationsContainer = document.getElementById('notifications');
         let notifications = [];
+        const API_URL = 'http://localhost:8000/api';
 
         const icons = {
             info: 'ℹ️',
@@ -222,6 +599,10 @@
             warning: '⚠️',
             error: '❌'
         };
+
+        function updateStats() {
+            // notification summary cards removed; nothing to update here
+        }
 
         function addNotification(type, title, message) {
             // Request browser notification permission
@@ -242,6 +623,7 @@
 
             notifications.unshift(notification);
             renderNotifications();
+            updateStats();
         }
 
         function renderNotifications() {
@@ -249,7 +631,7 @@
                 notificationsContainer.innerHTML = `
                     <div class="empty-state">
                         <div class="empty-state-icon">🔔</div>
-                        <h2>No notifications yet</h2>
+                        <h3>No notifications yet</h3>
                         <p>Notifications will appear here in real-time</p>
                     </div>
                 `;
@@ -260,10 +642,12 @@
                 <div class="notification ${n.type}">
                     <div class="notification-header">
                         <div class="notification-icon">${icons[n.type]}</div>
-                        <div class="notification-title">${n.title}</div>
+                        <div class="notification-content">
+                            <div class="notification-title">${n.title}</div>
+                            <div class="notification-message">${n.message}</div>
+                        </div>
                         <div class="notification-time">${n.time}</div>
                     </div>
-                    <div class="notification-message">${n.message}</div>
                 </div>
             `).join('');
         }
@@ -292,9 +676,61 @@
             addNotification(type, msg.title, msg.message);
         }
 
-        function clearNotifications() {
-            notifications = [];
-            renderNotifications();
+        async function clearNotifications() {
+            try {
+                await fetch(`${API_URL}/notifications`, { method: 'DELETE' });
+                notifications = [];
+                renderNotifications();
+                updateStats();
+            } catch (error) {
+                console.error('Failed to clear notifications:', error);
+            }
+        }
+
+        // Track IDs of notifications already shown as pop-ups
+        let shownNotificationIds = new Set();
+
+        async function fetchNotifications() {
+            try {
+                const response = await fetch(`${API_URL}/notifications`);
+                if (response.ok) {
+                    const newNotifications = await response.json();
+                    // Show pop-ups for new notifications only (using title+message as unique key, not time)
+                    for (const n of newNotifications) {
+                        const uniqueKey = n.id || (n.title + '|' + n.message);
+                        if (!shownNotificationIds.has(uniqueKey)) {
+                            if (Notification.permission === 'granted') {
+                                new Notification(n.title, {
+                                    body: n.message,
+                                    icon: '🔔'
+                                });
+                            }
+                            shownNotificationIds.add(uniqueKey);
+                        }
+                    }
+                    notifications = newNotifications;
+                    renderNotifications();
+                    updateStats();
+                    updateStatus(true);
+                } else {
+                    updateStatus(false);
+                }
+            } catch (error) {
+                console.error('Failed to fetch notifications:', error);
+                updateStatus(false);
+            }
+        }
+
+        // Update connection status
+        function updateStatus(connected) {
+            const status = document.getElementById('status');
+            if (connected) {
+                status.className = 'status connected';
+                status.innerHTML = '<span class="status-dot"></span><span>Connected</span>';
+            } else {
+                status.className = 'status disconnected';
+                status.innerHTML = '<span class="status-dot"></span><span>Disconnected</span>';
+            }
         }
 
         // Request notification permission on load
@@ -302,21 +738,191 @@
             Notification.requestPermission();
         }
 
-        // Expose function to be called from Python
-        window.addNotification = addNotification;
+        // Poll for new notifications every 2 seconds
+        setInterval(fetchNotifications, 2000);
 
-        // Simulate connection status
-        setInterval(() => {
-            const status = document.getElementById('status');
-            if (Math.random() > 0.95) {
-                status.className = 'status disconnected';
-                status.innerHTML = '🔴 Reconnecting...';
-                setTimeout(() => {
-                    status.className = 'status connected';
-                    status.innerHTML = '🟢 Connected';
-                }, 2000);
+        // Initial fetch
+        fetchNotifications();
+
+        // Try to populate task stats. Expects an endpoint at `${API_URL}/tasks/summary` returning { total, pending, overdue }
+        async function updateTaskStats() {
+            try {
+                const resp = await fetch(`${API_URL}/tasks/summary`);
+                if (!resp.ok) return; // leave defaults
+                const data = await resp.json();
+                document.getElementById('stat-total-val').textContent = data.total ?? '0';
+                document.getElementById('stat-pending-val').textContent = data.pending ?? '0';
+                document.getElementById('stat-overdue-val').textContent = data.overdue ?? '0';
+            } catch (e) {
+                // ignore; endpoint may not exist
             }
-        }, 5000);
+        }
+
+        // Update task stats every 10 seconds
+        updateTaskStats();
+        setInterval(updateTaskStats, 10000);
+
+        const chatbot = document.getElementById('chatbot');
+        const chatbotHeader = document.getElementById('chatbotHeader');
+        const chatMinimizeBtn = document.getElementById('chatMinimizeBtn');
+        const chatCloseBtn = document.getElementById('chatCloseBtn');
+
+        function openChat() { chatbot.classList.add('open'); }
+        function closeChat() { chatbot.classList.remove('open'); }
+
+        // Toggle when header clicked
+        chatbotHeader.addEventListener('click', (e) => {
+            if (e.target === chatMinimizeBtn || e.target === chatCloseBtn) return;
+            chatbot.classList.toggle('open');
+        });
+
+        chatMinimizeBtn.addEventListener('click', (e) => { e.stopPropagation(); chatbot.classList.toggle('open'); });
+        chatCloseBtn.addEventListener('click', (e) => { e.stopPropagation(); chatbot.style.display = 'none'; });
+
+        // Delegate clicks for suggestion cards
+        document.addEventListener('click', (e) => {
+            const card = e.target.closest('.suggestion-card');
+            if (card) {
+                const text = card.getAttribute('data-suggestion') || card.textContent.replace(/^[^\w]+/, '').trim();
+                sendSuggestion(text);
+            }
+        });
+
+        // Embedded chat functions (adapted from chatbot.html)
+        let chatMessageCount = 0;
+
+        function getCurrentTime() {
+            const now = new Date();
+            return now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function addMessage(text, isUser) {
+            const chatContainer = document.getElementById('chatContainer');
+            const welcomeScreen = document.getElementById('welcomeScreen');
+            const quickActions = document.getElementById('quickActions');
+
+            if (chatMessageCount === 0) {
+                if (welcomeScreen) welcomeScreen.style.display = 'none';
+                if (quickActions) quickActions.style.display = 'flex';
+            }
+            chatMessageCount++;
+
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user' : 'bot'}`;
+            messageDiv.style.display = 'flex';
+            messageDiv.style.gap = '12px';
+            messageDiv.style.marginBottom = '12px';
+
+            const avatar = document.createElement('div');
+            avatar.className = `avatar ${isUser ? 'user' : 'bot'}`;
+            avatar.textContent = isUser ? '👤' : '🤖';
+            avatar.style.width = '36px';
+            avatar.style.height = '36px';
+            avatar.style.borderRadius = '8px';
+            avatar.style.display = 'flex';
+            avatar.style.alignItems = 'center';
+            avatar.style.justifyContent = 'center';
+
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            contentDiv.textContent = text;
+            contentDiv.style.padding = '10px 12px';
+            contentDiv.style.borderRadius = '12px';
+            contentDiv.style.maxWidth = '220px';
+            contentDiv.style.whiteSpace = 'pre-wrap';
+            if (isUser) {
+                contentDiv.style.background = 'linear-gradient(135deg,#3b82f6,#2563eb)';
+                contentDiv.style.color = 'white';
+            } else {
+                contentDiv.style.background = 'white';
+                contentDiv.style.color = '#1e293b';
+                contentDiv.style.boxShadow = '0 2px 8px rgba(0,0,0,0.06)';
+            }
+
+            const timestamp = document.createElement('div');
+            timestamp.className = 'timestamp';
+            timestamp.textContent = getCurrentTime();
+            timestamp.style.fontSize = '11px';
+            timestamp.style.opacity = '0.6';
+            timestamp.style.marginTop = '6px';
+            contentDiv.appendChild(timestamp);
+
+            messageDiv.appendChild(avatar);
+            messageDiv.appendChild(contentDiv);
+
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function showTypingIndicator() {
+            const typingIndicator = document.getElementById('typingIndicator');
+            if (typingIndicator) typingIndicator.style.display = 'flex';
+            const chatContainer = document.getElementById('chatContainer');
+            if (chatContainer) chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function hideTypingIndicator() {
+            const typingIndicator = document.getElementById('typingIndicator');
+            if (typingIndicator) typingIndicator.style.display = 'none';
+        }
+
+        function showError(message) {
+            hideTypingIndicator();
+            const chatContainer = document.getElementById('chatContainer');
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-message';
+            errorDiv.textContent = `❌ ${message}`;
+            errorDiv.style.background = '#fee2e2';
+            errorDiv.style.color = '#991b1b';
+            errorDiv.style.padding = '8px 12px';
+            errorDiv.style.borderRadius = '8px';
+            chatContainer.appendChild(errorDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('userInput');
+            const message = input.value.trim();
+            if (!message) return;
+
+            // Add user message locally
+            addMessage(message, true);
+            input.value = '';
+
+            // Call chat API
+            showTypingIndicator();
+            try {
+                const response = await fetch(`${API_URL}/chat`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message })
+                });
+                const data = await response.json();
+                hideTypingIndicator();
+                if (data.error) {
+                    showError(data.error);
+                } else {
+                    addMessage(data.response || 'No response', false);
+                }
+            } catch (err) {
+                hideTypingIndicator();
+                showError('Failed to send message.');
+                console.error(err);
+            }
+        }
+
+        function sendSuggestion(text) {
+            const input = document.getElementById('userInput');
+            input.value = text;
+            sendMessage();
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        }
     </script>
 </body>
 </html>

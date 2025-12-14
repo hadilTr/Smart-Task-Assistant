@@ -1,18 +1,1 @@
-[
-  {
-    "id": 2,
-    "type": "info",
-    "title": "Hello",
-    "message": "Hello, how can I help you today?",
-    "timestamp": "2025-12-13T22:20:21.032886",
-    "time": "10:20:21 PM"
-  },
-  {
-    "id": 1,
-    "type": "info",
-    "title": "Hello",
-    "message": "Hi",
-    "timestamp": "2025-12-13T22:08:03.873361",
-    "time": "10:08:03 PM"
-  }
-]
+[]
